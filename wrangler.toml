@@ -1,0 +1,58 @@
+name = "x-store"
+main = "functions/[[path]].js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Build configuration for Cloudflare Pages
+pages_build_output_dir = "X-store"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "x-db"
+database_id = "YOUR_DATABASE_ID_HERE"
+migrations_dir = "migrations"
+
+# R2 Bucket binding for product images
+[[r2_buckets]]
+binding = "PRODUCT_IMAGES"
+bucket_name = "x-product-images"
+
+# KV namespace for sessions (optional, for future auth)
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "YOUR_KV_NAMESPACE_ID_HERE"
+preview_id = "YOUR_KV_PREVIEW_ID_HERE"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+ADMIN_EMAIL = "admin@x.com"
+
+# Development settings
+[dev]
+ip = "127.0.0.1"
+port = 8787
+
+# Production environment (configure via dashboard)
+[env.production]
+name = "x-store-prod"
+main = "functions/[[path]].js"
+compatibility_date = "2024-12-01"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "x-db-prod"
+database_id = "YOUR_PROD_DATABASE_ID_HERE"
+migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "PRODUCT_IMAGES"
+bucket_name = "x-product-images-prod"
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "YOUR_PROD_KV_NAMESPACE_ID_HERE"
+
+[vars]
+ENVIRONMENT = "production"

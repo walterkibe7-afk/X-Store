@@ -32,15 +32,15 @@ function makeElement(id) {
         querySelector() { return null; },
         querySelectorAll() { return []; },
         appendChild(child) { this._child = child; return child; },
-        insertAdjacentHTML() {},
-        focus() {},
+        insertAdjacentHTML() { },
+        focus() { },
         addEventListener(type, fn) { (this._listeners[type] = this._listeners[type] || []).push(fn); },
-        remove() {},
+        remove() { },
         dispatch(type) {
             const event = {
                 defaultPrevented: false,
                 preventDefault() { this.defaultPrevented = true; },
-                stopPropagation() {}
+                stopPropagation() { }
             };
             (this._listeners[type] || []).forEach((fn) => fn(event));
             return event;
@@ -55,7 +55,7 @@ function makeDOM() {
     return {
         byId,
         bySelector,
-        addEventListener() {},
+        addEventListener() { },
         getElementById(id) {
             if (!byId.has(id)) byId.set(id, makeElement(id));
             return byId.get(id);
@@ -99,7 +99,7 @@ function makeLocalStorage() {
 }
 
 function makeWindow() {
-    return { location: { href: "" }, addEventListener() {}, scrollY: 0 };
+    return { location: { href: "" }, addEventListener() { }, scrollY: 0 };
 }
 
 const results = [];
