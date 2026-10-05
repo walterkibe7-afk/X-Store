@@ -1,0 +1,187 @@
+/* =========================
+   ABOUT X
+   Same design system as the rest of the site: Playfair headlines,
+   DM Sans body, cream/black palette, the shared gutter/container rhythm.
+   ========================= */
+
+/* --- HERO --- */
+.about-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--cream);
+    max-width: var(--container);
+    margin-inline: auto;
+}
+.about-hero-content {
+    padding: clamp(60px, 7vw, 110px) clamp(24px, 5vw, 80px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.about-hero-content h1 {
+    margin: 0;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(44px, 5.5vw, 76px);
+    font-weight: 500;
+    line-height: .98;
+    letter-spacing: -.04em;
+}
+.about-hero-copy {
+    max-width: 420px;
+    margin-top: 30px;
+    color: var(--gray);
+    font-size: 15px;
+    line-height: 1.7;
+}
+.about-hero-image { min-height: 560px; }
+.hero-image-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 560px;
+    background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(0,0,0,.08)),
+        url("https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1300&q=85");
+    background-size: cover;
+    background-position: center;
+}
+
+/* --- OUR APPROACH --- */
+.about-approach { padding: 110px max(var(--gutter), (100% - var(--container)) / 2); border-top: 1px solid var(--line); }
+.section-label { margin: 0 0 45px; color: var(--gray); font-size: 10px; font-weight: 700; letter-spacing: .16em; }
+.approach-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(40px, 6vw, 90px);
+    align-items: start;
+}
+.approach-content h2 { margin: 0; max-width: 460px; }
+.approach-copy { max-width: 470px; }
+.approach-copy p {
+    margin: 0 0 22px;
+    color: var(--gray);
+    font-size: 14px;
+    line-height: 1.8;
+}
+.approach-copy p:last-child { margin-bottom: 0; }
+
+/* --- WHAT WE CARE ABOUT --- */
+.values-section {
+    padding: 110px max(var(--gutter), (100% - var(--container)) / 2);
+    background: var(--cream-dark);
+}
+.values-heading { margin-bottom: 55px; }
+.values-heading h2 { margin: 0; max-width: 640px; }
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line);
+    padding-top: 42px;
+}
+.value-card { padding-right: 40px; }
+.value-card + .value-card { padding-left: 35px; border-left: 1px solid var(--line); }
+.value-number { display: block; margin-bottom: 26px; color: var(--gray); font-size: 10px; letter-spacing: .1em; }
+.value-card h3 {
+    margin: 0 0 12px;
+    font-family: "Playfair Display", serif;
+    font-size: 24px;
+    font-weight: 500;
+    text-transform: none;
+}
+.value-card p { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.7; }
+
+/* --- THE X EXPERIENCE --- */
+.experience-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: var(--container);
+    margin-inline: auto;
+    background: var(--cream);
+}
+.experience-image-placeholder {
+    min-height: 620px;
+    background: linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.12)),
+        url("https://images.unsplash.com/photo-1600428877878-1a0e5a2d9a4a?auto=format&fit=crop&w=1300&q=85");
+    background-size: cover;
+    background-position: center;
+}
+.experience-content {
+    padding: clamp(50px, 7vw, 96px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.experience-content h2 { margin: 0 0 26px; max-width: 500px; }
+.experience-content > p:not(.eyebrow) {
+    max-width: 430px;
+    margin: 0 0 35px;
+    color: var(--gray);
+    font-size: 14px;
+    line-height: 1.8;
+}
+.experience-content .button { align-self: flex-start; }
+
+/* --- DISCREET SHOPPING --- */
+.discretion-section {
+    padding: 110px max(var(--gutter), (100% - var(--container)) / 2);
+    border-top: 1px solid var(--line);
+}
+.discretion-inner h2 { margin: 0 0 50px; max-width: 720px; }
+.discretion-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line);
+    padding-top: 38px;
+}
+.discretion-grid > div { padding-right: 40px; }
+.discretion-grid > div + div { padding-left: 35px; border-left: 1px solid var(--line); }
+.discretion-icon { display: block; margin-bottom: 20px; color: var(--gray); font-size: 10px; letter-spacing: .1em; }
+.discretion-grid h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; }
+.discretion-grid p { margin: 0; color: var(--gray); font-size: 12px; line-height: 1.7; }
+
+/* --- FINAL CTA --- */
+.about-final-cta {
+    padding: 120px max(var(--gutter), (100% - var(--container)) / 2);
+    background: var(--black);
+    color: white;
+    text-align: center;
+}
+.about-final-cta .eyebrow { color: #888; }
+.about-final-cta h2 { margin: 0 0 40px; }
+.about-cta-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+.about-final-cta .button-dark { background: white; color: var(--black); }
+.about-final-cta .button-dark:hover { background: #e2dde6; }
+.about-final-cta .button-light { border-color: white; color: white; }
+.about-final-cta .button-light:hover { background: white; color: var(--black); }
+
+/* --- RESPONSIVE: same 1000px / 600px breakpoints as the rest of the site --- */
+@media (max-width: 1000px) {
+    .about-hero { grid-template-columns: 1fr; }
+    .about-hero-image, .hero-image-placeholder { min-height: 460px; }
+    .approach-content { grid-template-columns: 1fr; gap: 35px; }
+    .approach-content h2, .approach-copy { max-width: none; }
+    .values-grid, .discretion-grid { grid-template-columns: repeat(2, 1fr); gap: 40px 0; }
+    .value-card, .discretion-grid > div { padding-right: 30px; }
+    .value-card + .value-card, .discretion-grid > div + div { padding-left: 30px; border-left: 1px solid var(--line); }
+    .value-card:nth-child(odd), .discretion-grid > div:nth-child(odd) { padding-left: 0; border-left: 0; }
+    .experience-section { grid-template-columns: 1fr; }
+    .experience-image-placeholder { min-height: 480px; }
+}
+@media (max-width: 600px) {
+    .about-hero-content { padding: 60px 20px; }
+    .about-hero-image, .hero-image-placeholder { min-height: 360px; }
+    .about-approach, .values-section, .discretion-section { padding-top: 75px; padding-bottom: 75px; }
+    .section-label { margin-bottom: 30px; }
+    .values-grid, .discretion-grid { display: block; padding-top: 30px; gap: 0; }
+    .value-card, .value-card + .value-card,
+    .discretion-grid > div, .discretion-grid > div + div {
+        padding: 25px 0;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+    }
+    .value-card:first-child, .discretion-grid > div:first-child { padding-top: 0; border-top: 0; }
+    .value-card h3 { font-size: 22px; }
+    .experience-image-placeholder { min-height: 380px; }
+    .experience-content { padding: 60px 20px; }
+    .discretion-inner h2 { margin-bottom: 35px; }
+    .about-final-cta { padding: 80px 20px; }
+    .about-cta-buttons { flex-direction: column; align-items: stretch; }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop - X Intimate Wellness</title>
+<meta name="description" content="Browse X: Intimate and Wellness products for pleasure, self-care and everyday wellbeing. Filter by product type and price.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="shop.css">
+</head>
+<body>
+<div class="announcement"><p>Discreet packaging on every order</p></div>
+<header class="navbar">
+<a href="index.html" class="logo">X</a>
+<nav class="nav-links" id="site-nav">
+<a href="shop.html" class="active-nav">Shop</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a><a href="about.html">About</a><a href="quiz.html">Find Your Match</a>
+</nav>
+<div class="nav-actions">
+<button class="icon-button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></svg></button>
+<a href="login.html" class="icon-button" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></svg></a>
+<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg><span class="cart-count">0</span></a>
+<button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
+</div>
+</header>
+<main>
+<section class="shop-header"><div>
+<p class="eyebrow">THE COLLECTION</p>
+<h1>Shop <em>everything.</em></h1>
+<p class="shop-intro">Intimate wellness, self-care and little things that make you feel good.</p>
+</div></section>
+<section class="shop-categories">
+<a href="shop.html" class="category-active">All</a><a href="shop.html?category=intimate" class="cat-intimate">Intimate</a><a href="shop.html?category=wellness" class="cat-wellness">Wellness</a>
+</section>
+<section class="shop-products">
+<div class="shop-toolbar">
+<button class="filter-button" type="button" aria-expanded="false" aria-controls="shop-filter-panel"><span class="filter-icon">&#9776;</span> Filters</button>
+<p>8 products</p>
+<button class="sort-button" type="button" aria-expanded="false" aria-controls="shop-sort-menu">Sort: <strong>Featured</strong><span>&#709;</span></button>
+
+<div class="filter-panel" id="shop-filter-panel" hidden>
+<div class="filter-group">
+<h2>Category</h2>
+<label class="filter-option"><input type="radio" name="shopCategory" value=""> <span>All products</span></label>
+<label class="filter-option"><input type="radio" name="shopCategory" value="intimate"> <span>Intimate</span></label>
+<label class="filter-option"><input type="radio" name="shopCategory" value="wellness"> <span>Wellness</span></label>
+</div>
+<div class="filter-group filter-group-intimate">
+<h2>Intimate</h2>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="toys"> <span>Toys</span></label>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="lubricants"> <span>Lubricants</span></label>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="accessories"> <span>Accessories</span></label>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="intimate-care"> <span>Intimate Care</span></label>
+</div>
+<div class="filter-group filter-group-wellness">
+<h2>Wellness</h2>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="gummies"> <span>Gummies</span></label>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="body-massage"> <span>Body &amp; Massage</span></label>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="self-care"> <span>Self-Care</span></label>
+<label class="filter-option"><input type="checkbox" name="shopSubcategory" value="wellness"> <span>Wellness</span></label>
+</div>
+<div class="filter-group">
+<h2>Price</h2>
+<label class="filter-option"><input type="checkbox" name="shopPrice" value="under-30"> <span>Under $30</span></label>
+<label class="filter-option"><input type="checkbox" name="shopPrice" value="30-50"> <span>$30 &ndash; $50</span></label>
+<label class="filter-option"><input type="checkbox" name="shopPrice" value="over-50"> <span>$50 &amp; over</span></label>
+</div>
+<div class="filter-actions">
+<button type="button" class="filter-apply">Apply</button>
+<button type="button" class="filter-clear">Clear</button>
+</div>
+</div>
+
+<ul class="sort-menu" id="shop-sort-menu" hidden>
+<li><button type="button" data-sort="featured">Featured</button></li>
+<li><button type="button" data-sort="newest">Newest</button></li>
+<li><button type="button" data-sort="price-asc">Price: Low to High</button></li>
+<li><button type="button" data-sort="price-desc">Price: High to Low</button></li>
+</ul>
+</div>
+<div class="shop-grid"></div>
+<p class="shop-empty-state" hidden>No products found. <button type="button" class="clear-filters">Clear filters</button></p>
+<div class="load-more"><button type="button">Load more</button></div>
+</section>
+<section class="shop-quiz"><div>
+<p class="eyebrow">NEED A LITTLE HELP?</p>
+<h2>Let us help you<br><em>find your match.</em></h2>
+<a href="quiz.html" class="button button-dark">Take the quiz <span>&rarr;</span></a>
+</div></section>
+</main>
+<footer class="footer">
+<div class="footer-top">
+<div class="footer-brand"><a href="index.html" class="logo footer-logo">X</a><p>Intimate wellness,<br>made personal.</p></div>
+<div class="footer-column"><h4>Shop</h4><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
+<div class="footer-column"><h4>Help</h4><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
+<div class="footer-column"><h4>About</h4><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
+</div>
+<div class="footer-bottom"><span>&copy; 2026 X. All rights reserved.</span><span>Designed for intimate wellness.</span></div>
+</footer>
+<script src="cart-store.js"></script>
+<script src="products.js"></script>
+<script src="script.js"></script>
+<script src="shop.js"></script>
+</body>
+</html>
