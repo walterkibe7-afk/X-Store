@@ -1,0 +1,12 @@
+{
+  "name": "x-store",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npx serve x-store"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
