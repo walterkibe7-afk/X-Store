@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account - X</title>
+<meta name="description" content="Create an X account to save your orders, preferences and future purchases in one place.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="signup.css">
+</head>
+<body>
+<main class="auth-page">
+<a href="index.html" class="auth-logo">X</a>
+<div class="auth-card">
+<div class="auth-header">
+<span class="eyebrow">JOIN X</span>
+<h1>Create your account.</h1>
+<p>Save your orders, preferences and future purchases in one place.</p>
+</div>
+<form id="signupForm" novalidate>
+<div class="name-grid">
+<div class="form-group">
+<label for="firstName">First name</label>
+<input type="text" id="firstName" autocomplete="given-name" required>
+</div>
+<div class="form-group">
+<label for="lastName">Last name</label>
+<input type="text" id="lastName" autocomplete="family-name" required>
+</div>
+</div>
+<div class="form-group">
+<label for="signupEmail">Email address</label>
+<input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email" required>
+</div>
+<div class="form-group">
+<label for="signupPassword">Password</label>
+<input type="password" id="signupPassword" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required>
+</div>
+<div class="form-group">
+<label for="confirmPassword">Confirm password</label>
+<input type="password" id="confirmPassword" placeholder="Enter your password again" autocomplete="new-password" minlength="8" required>
+</div>
+<label class="terms-row">
+<input type="checkbox" id="terms" required>
+<span>I agree to the terms and understand the privacy policy.</span>
+</label>
+<button type="submit" class="auth-button">Create account</button>
+<p class="form-message" id="signupMessage" role="status" aria-live="polite"></p>
+</form>
+<div class="auth-divider"><span>OR</span></div>
+<p class="switch-auth">Already have an account? <a href="login.html">Log in</a></p>
+</div>
+<a href="index.html" class="back-link">&larr; Back to X</a>
+</main>
+<script src="signup.js"></script>
+</body>
+</html>

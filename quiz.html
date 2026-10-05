@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Your Match - X</title>
+<meta name="description" content="Answer a few simple questions and get a personal product recommendation from The X Match quiz.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+<div class="announcement"><p>Discreet packaging on every order</p></div>
+<header class="navbar">
+<a href="index.html" class="logo">X</a>
+<nav class="nav-links" id="site-nav">
+<a href="shop.html">Shop</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a><a href="about.html">About</a><a href="quiz.html" class="quiz-nav">Find Your Match</a>
+</nav>
+<div class="nav-actions">
+<button class="icon-button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></svg></button>
+<a href="login.html" class="icon-button" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></svg></a>
+<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg><span class="cart-count">0</span></a>
+<button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
+</div>
+</header>
+<main>
+<section class="quiz-intro">
+<div class="quiz-intro-content">
+<p>THE X MATCH</p>
+<h1>Find what feels <em>right</em> for you.</h1>
+<p class="quiz-intro-text">A few simple questions. A more personal way to discover what you're looking for.</p>
+<button class="quiz-start" type="button">Start the quiz</button>
+<span class="quiz-time">Takes about 1 minute</span>
+</div>
+</section>
+<section class="quiz-flow-section">
+<div class="quiz-container">
+<div class="quiz-progress">
+<div class="progress-top"><span>QUESTION <strong id="question-number">1</strong> OF 5</span><span id="progress-percent">20%</span></div>
+<div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+<div class="question active" data-question="1">
+<p class="question-label">LET'S START SIMPLE</p>
+<h2>What are you looking for today?</h2>
+<div class="answer-grid">
+<button type="button" data-value="explore"><span>01</span> I'm exploring</button>
+<button type="button" data-value="selfcare"><span>02</span> More self-care</button>
+<button type="button" data-value="wellness"><span>03</span> Everyday wellness</button>
+<button type="button" data-value="gift"><span>04</span> A gift for someone</button>
+</div>
+</div>
+<div class="question" data-question="2">
+<p class="question-label">YOUR VIBE</p>
+<h2>How would you describe your ideal experience?</h2>
+<div class="answer-grid">
+<button type="button" data-value="simple"><span>01</span> Simple &amp; easy</button>
+<button type="button" data-value="sensory"><span>02</span> Slow &amp; sensory</button>
+<button type="button" data-value="playful"><span>03</span> Fun &amp; playful</button>
+<button type="button" data-value="ritual"><span>04</span> Calm &amp; intentional</button>
+</div>
+</div>
+<div class="question" data-question="3">
+<p class="question-label">EXPERIENCE</p>
+<h2>How familiar are you with intimate wellness?</h2>
+<div class="answer-grid">
+<button type="button" data-value="new"><span>01</span> Completely new</button>
+<button type="button" data-value="curious"><span>02</span> Curious</button>
+<button type="button" data-value="familiar"><span>03</span> Pretty familiar</button>
+<button type="button" data-value="experienced"><span>04</span> I know what I like</button>
+</div>
+</div>
+<div class="question" data-question="4">
+<p class="question-label">WHAT MATTERS</p>
+<h2>What would you like to prioritize?</h2>
+<div class="answer-grid">
+<button type="button" data-value="comfort"><span>01</span> Comfort</button>
+<button type="button" data-value="quality"><span>02</span> Quality</button>
+<button type="button" data-value="simplicity"><span>03</span> Simplicity</button>
+<button type="button" data-value="discovery"><span>04</span> Discovery</button>
+</div>
+</div>
+<div class="question" data-question="5">
+<p class="question-label">ONE LAST THING</p>
+<h2>What's your preferred price range?</h2>
+<div class="answer-grid">
+<button type="button" data-value="under30"><span>01</span> Under $30</button>
+<button type="button" data-value="30to50"><span>02</span> $30 - $50</button>
+<button type="button" data-value="50to75"><span>03</span> $50 - $75</button>
+<button type="button" data-value="any"><span>04</span> I'm flexible</button>
+</div>
+</div>
+<div class="quiz-navigation">
+<button class="quiz-back" type="button" disabled>&larr; Back</button>
+<button class="quiz-next" type="button">Next &rarr;</button>
+</div>
+<div class="quiz-results">
+<p class="results-label">YOUR X MATCH</p>
+<h2>Something selected just for you.</h2>
+<p class="results-description">Based on your answers, we think this could be a good place to start.</p>
+<div class="result-product">
+<div class="result-image"></div>
+<div class="result-info">
+<p class="result-category"></p>
+<h3 class="result-name"></h3>
+<span class="result-description"></span>
+<strong class="result-price"></strong>
+<a href="shop.html" class="result-link">View product &rarr;</a>
+</div>
+</div>
+<div class="results-email">
+<p>WANT TO SAVE YOUR RESULTS?</p>
+<h3>Send your match to your inbox.</h3>
+<div class="email-form">
+<input type="email" placeholder="Your email address" id="quiz-email" aria-label="Email address">
+<button id="save-results" type="button">Send results</button>
+</div>
+<span>This is a front-end preview &mdash; no email is sent yet.</span>
+</div>
+<div class="results-actions">
+<button id="restart-quiz" type="button">Retake quiz</button>
+<a href="shop.html">Explore everything &rarr;</a>
+</div>
+</div>
+</div>
+</section>
+<section class="quiz-bottom">
+<div>
+<p>STILL NOT SURE?</p>
+<h2>There's no wrong place to start.</h2>
+<a href="shop.html">Browse the collection</a>
+</div>
+</section>
+</main>
+<footer class="footer">
+<div class="footer-top">
+<div class="footer-brand"><a href="index.html" class="logo">X</a><p>Intimate wellness,<br>made personal.</p></div>
+<div class="footer-column"><h4>Shop</h4><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
+<div class="footer-column"><h4>Help</h4><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
+<div class="footer-column"><h4>About</h4><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
+</div>
+<div class="footer-bottom"><span>&copy; 2026 X. All rights reserved.</span><span>Made for feeling good.</span></div>
+</footer>
+<script src="cart-store.js"></script>
+<script src="products.js"></script>
+<script src="script.js"></script>
+<script src="quiz.js"></script>
+</body>
+</html>

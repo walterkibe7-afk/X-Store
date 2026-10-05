@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed | X Store</title>
+<meta name="description" content="Thank you for your order. Your X order has been received and is being prepared for discreet delivery.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="order-confirmation.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo"><a href="index.html">X</a></div>
+        <div class="header-right">
+            <span>SECURE CHECKOUT</span>
+        </div>
+    </header>
+
+    <main class="order-confirmation-container">
+        <div class="confirmation-icon">✓</div>
+        <h1 id="confirmation-title">ORDER CONFIRMED</h1>
+        <p class="thank-you-msg">Thank you, <span id="customer-firstname">Customer</span>.</p>
+        <p class="preparing-msg">Your order has been received and is being prepared.</p>
+
+        <h2 class="order-number">ORDER #<span id="order-id">X48291</span></h2>
+
+        <hr class="divider">
+
+        <section class="order-summary">
+            <h3>YOUR ORDER</h3>
+            
+            <div class="order-items" id="order-items-container">
+                <!-- Order items will be dynamically injected here -->
+            </div>
+
+            <hr class="divider thin">
+
+            <div class="totals">
+                <div class="totals-row">
+                    <span>Subtotal</span>
+                    <span id="order-subtotal">$0</span>
+                </div>
+                <div class="totals-row">
+                    <span>Shipping</span>
+                    <span id="order-shipping">$5</span>
+                </div>
+                <div class="totals-row grand-total">
+                    <span>TOTAL</span>
+                    <span id="order-total">$0</span>
+                </div>
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <section class="delivery-info">
+            <h3>DELIVERY</h3>
+            
+            <div class="delivery-estimate">
+                <p class="label">Estimated delivery</p>
+                <p class="value" id="delivery-dates">Oct 8 – Oct 10</p>
+                <p class="method" id="delivery-method">Standard delivery · 3-7 business days</p>
+            </div>
+
+            <div class="shipping-address">
+                <p class="label">Shipping address</p>
+                <div class="address-details" id="shipping-address-container">
+                    <!-- Address will be injected here -->
+                </div>
+            </div>
+        </section>
+
+        <div class="discreet-packaging-notice">
+            <div class="notice-icon">🔒</div>
+            <div class="notice-text">
+                <strong>Your order will arrive in discreet packaging.</strong>
+                <p>No product names or sensitive information on the outside of the package.</p>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="account.html" class="btn btn-primary btn-block">VIEW MY ACCOUNT</a>
+            <a href="shop.html" class="btn btn-secondary btn-block">CONTINUE SHOPPING</a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-logo">X</div>
+        <nav class="footer-nav">
+            <a href="shop.html">Shop</a>
+            <a href="shop.html?category=intimate">Intimate</a>
+            <a href="shop.html?category=wellness">Wellness</a>
+            <a href="about.html">About</a>
+            <a href="quiz.html">Find Your Match</a>
+        </nav>
+        <div class="footer-bottom">
+            <span>© 2026 X</span>
+            <div class="footer-legal">
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="cart-store.js"></script>
+    <script src="order-confirmation.js"></script>
+</body>
+</html>
