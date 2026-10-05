@@ -54,5 +54,5 @@ bucket_name = "x-product-images-prod"
 binding = "SESSIONS"
 id = "YOUR_PROD_KV_NAMESPACE_ID_HERE"
 
-[vars]
+[env.production.vars]
 ENVIRONMENT = "production"
