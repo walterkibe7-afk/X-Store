@@ -1,0 +1,184 @@
+/* =========================
+   ORDER CONFIRMATION
+   Deliberately calm: same premium language as the rest of X, no celebration
+   graphics. The page's only job is to say "your order went through".
+   ========================= */
+
+.header {
+    height: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 max(var(--gutter), (100% - var(--container)) / 2);
+    border-bottom: 1px solid var(--line);
+    background: var(--white);
+}
+.header .logo a { font-family: "Playfair Display", serif; font-size: 34px; line-height: 1; }
+.header-right { color: var(--gray); font-size: 10px; font-weight: 700; letter-spacing: .18em; }
+
+.order-confirmation-container {
+    width: min(780px, 100% - (var(--gutter) * 2));
+    margin: 0 auto;
+    padding: 90px 0 110px;
+    text-align: center;
+}
+
+.confirmation-icon {
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--black);
+    border-radius: 50%;
+    font-size: 22px;
+}
+
+.order-confirmation-container h1 {
+    margin: 0;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(42px, 6vw, 74px);
+    font-weight: 500;
+    line-height: .95;
+    letter-spacing: -.04em;
+}
+
+.thank-you-msg { margin: 28px 0 8px; font-family: "Playfair Display", serif; font-size: 22px; font-weight: 500; }
+.preparing-msg { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.6; }
+
+.order-number { margin: 42px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+
+.divider { width: 220px; height: 1px; margin: 40px auto; border: 0; background: var(--line); }
+.divider.thin { width: 100%; margin: 24px 0; }
+[hidden] { display: none !important; }
+
+.order-summary, .delivery-info { text-align: left; }
+.order-summary h3, .delivery-info h3 {
+    margin: 0 0 26px;
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .16em;
+}
+
+/* --- purchased products --- */
+.order-item {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 0;
+}
+.order-item + .order-item { border-top: 1px solid var(--line); }
+.order-item-image {
+    position: relative;
+    width: 64px;
+    height: 74px;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 45%, #d9d3e0, #8f86a0 55%, #4a4457);
+}
+.order-item-image span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 38%;
+    height: 62%;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    border-radius: 45%;
+    background: linear-gradient(145deg, #e8e3ee, #a096b0);
+}
+.order-item-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.order-item-info strong { font-family: "Playfair Display", serif; font-size: 19px; font-weight: 500; }
+.order-item-category { color: var(--gray); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.order-item-qty { color: var(--gray); font-size: 11px; }
+.order-item-price { font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+/* --- totals --- */
+.totals-row { display: flex; justify-content: space-between; gap: 20px; padding: 9px 0; color: var(--gray); font-size: 12px; }
+.totals-row.grand-total {
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--black);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .1em;
+}
+.totals-row.grand-total span:last-child { font-family: "Playfair Display", serif; font-size: 27px; font-weight: 500; letter-spacing: 0; }
+
+/* --- delivery: useful, but never the main event --- */
+.delivery-estimate, .shipping-address { margin-bottom: 28px; }
+.delivery-info .label {
+    margin: 0 0 9px;
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+.delivery-info .value { margin: 0; font-family: "Playfair Display", serif; font-size: 25px; font-weight: 500; }
+.delivery-info .method { margin: 7px 0 0; color: var(--gray); font-size: 11px; }
+.address-details p { margin: 0 0 5px; font-size: 13px; line-height: 1.65; }
+
+/* --- privacy reassurance: one of X's core promises, kept visible --- */
+.discreet-packaging-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-top: 36px;
+    padding: 22px;
+    background: var(--cream-dark);
+    text-align: left;
+}
+.notice-icon { font-size: 15px; line-height: 1.4; }
+.notice-text strong { display: block; margin-bottom: 6px; font-size: 12px; }
+.notice-text p { margin: 0; color: var(--gray); font-size: 11px; line-height: 1.6; }
+
+/* --- actions --- */
+.actions { display: flex; flex-direction: column; gap: 12px; margin-top: 38px; }
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    padding: 0 30px;
+    border: 1px solid var(--black);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+.btn-block { width: 100%; }
+.btn-primary { background: var(--black); color: white; }
+.btn-primary:hover { background: #2f2c31; border-color: #2f2c31; }
+.btn-secondary { background: transparent; color: var(--black); }
+.btn-secondary:hover { background: var(--black); color: white; }
+
+/* --- footer --- */
+.footer { padding-top: 60px; padding-bottom: 40px; }
+.footer-logo { font-family: "Playfair Display", serif; font-size: 34px; line-height: 1; }
+.footer-nav { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 28px; font-size: 13px; }
+.footer-nav a { color: #999; transition: color .2s ease; }
+.footer-nav a:hover { color: white; }
+.footer-bottom { margin-top: 45px; }
+.footer-legal { display: flex; gap: 22px; }
+.footer-legal a { color: #666; transition: color .2s ease; }
+.footer-legal a:hover { color: white; }
+
+@media (max-width: 600px) {
+    .header { height: 70px; }
+    .order-confirmation-container { padding: 60px 0 80px; }
+    .confirmation-icon { width: 54px; height: 54px; margin-bottom: 26px; font-size: 19px; }
+    .thank-you-msg { font-size: 19px; }
+    .divider { width: 150px; margin: 32px auto; }
+    .order-item { grid-template-columns: 54px 1fr auto; gap: 14px; }
+    .order-item-image { width: 54px; height: 62px; }
+    .order-item-info strong { font-size: 16px; }
+    .delivery-info .value { font-size: 21px; }
+    .footer-nav { gap: 18px; font-size: 12px; }
+}

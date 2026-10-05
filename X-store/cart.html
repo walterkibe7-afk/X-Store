@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Cart - X</title>
+<meta name="description" content="Review the items in your X cart, adjust quantities and continue to secure checkout with discreet packaging on every order.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="cart.css">
+</head>
+<body>
+<div class="announcement"><p>Discreet packaging on every order</p></div>
+<header class="navbar">
+<a href="index.html" class="logo">X</a>
+<nav class="nav-links" id="site-nav">
+<a href="shop.html">Shop</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a><a href="about.html">About</a><a href="quiz.html">Find Your Match</a>
+</nav>
+<div class="nav-actions">
+<button class="icon-button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></svg></button>
+<a href="login.html" class="icon-button" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></svg></a>
+<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg><span class="cart-count">0</span></a>
+<button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
+</div>
+</header>
+<main>
+<div class="cart-container">
+<section class="cart-header">
+<div><p>YOUR CART</p><h1>Your cart.</h1><span class="cart-item-count" id="cartItemCount" hidden>0 ITEMS</span></div>
+<a href="shop.html" class="continue-shopping">Continue shopping &rarr;</a>
+</section>
+<section class="cart-layout">
+<div class="cart-products" id="cartProducts">
+    <div class="cart-empty" id="cartEmpty" hidden>
+    <p>YOUR CART IS EMPTY</p>
+    <h2>Nothing here yet.</h2>
+    <p class="cart-empty-text">Browse the collection and find something worth making space for.</p>
+    <div class="cart-empty-actions">
+    <a href="shop.html" class="cart-empty-button">Shop Everything</a>
+    <a href="quiz.html" class="cart-empty-button cart-empty-secondary">Find Your Match</a>
+    </div>
+    </div>
+    <div id="cartLines"></div>
+    <div class="cart-recommendation" id="cartRecommendation">
+<p>YOU MIGHT ALSO LIKE</p>
+<div><strong>After Dark Oil</strong><span>$28</span><button type="button">Add</button></div>
+</div>
+<div class="cart-note">
+<div class="note-icon">&#10003;</div>
+<div><strong>Discreet delivery, always.</strong><p>Your order arrives in plain, unbranded packaging.</p></div>
+</div>
+</div>
+<aside class="cart-summary">
+<h2>Order summary</h2>
+<div class="summary-row"><span>Subtotal</span><strong class="summary-subtotal">$59</strong></div>
+<div class="summary-row summary-shipping"><span>Shipping</span><strong class="summary-shipping-price">$5</strong></div>
+<div class="summary-divider"></div>
+<div class="summary-total"><span>Total</span><strong class="summary-total-price">$64</strong></div>
+<a href="checkout.html" class="checkout-button" id="checkoutButton">Continue to checkout</a>
+<p class="checkout-signin-hint" id="checkoutSigninHint" hidden>You need an X account to check out. We will bring you straight back here once you sign in.</p>
+<div class="secure-checkout"><span>&#8961;</span><p>Secure checkout<br>Your information is protected.</p></div>
+<div class="promo">
+<button class="promo-toggle" type="button">Have a promo code? <span>+</span></button>
+<div class="promo-content"><input type="text" placeholder="Enter code" aria-label="Promo code"><button type="button">Apply</button></div>
+</div>
+</aside>
+</section>
+<section class="cart-trust">
+<div><span>01</span><strong>Discreet packaging</strong><p>No branding on your parcel.</p></div>
+<div><span>02</span><strong>Secure checkout</strong><p>Your payment details stay protected.</p></div>
+<div><span>03</span><strong>Thoughtfully selected</strong><p>Products chosen with care.</p></div>
+</section>
+</div>
+</main>
+<footer class="footer">
+<div class="footer-top">
+<div class="footer-brand"><a href="index.html" class="logo">X</a><p>Intimate wellness,<br>made personal.</p></div>
+<div class="footer-column"><h4>Shop</h4><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
+<div class="footer-column"><h4>Help</h4><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
+<div class="footer-column"><h4>About</h4><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
+</div>
+<div class="footer-bottom"><span>&copy; 2026 X. All rights reserved.</span><span>Made for feeling good.</span></div>
+</footer>
+<script src="cart-store.js"></script>
+<script src="products.js"></script>
+<script src="script.js"></script>
+<script src="cart.js"></script>
+</body>
+</html>

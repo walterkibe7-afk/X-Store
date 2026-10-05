@@ -1,0 +1,123 @@
+/* =========================
+   HELP
+   Same design system as the rest of the site: Playfair headlines,
+   DM Sans body, cream/black palette, the shared gutter/container rhythm.
+   ========================= */
+
+/* --- HERO --- */
+.help-hero {
+    padding: 110px max(var(--gutter), (100% - var(--container)) / 2) 80px;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+}
+.help-hero-content { max-width: 850px; }
+.help-hero-content h1 {
+    margin: 0;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(65px, 9vw, 120px);
+    line-height: .88;
+    letter-spacing: -.05em;
+}
+.help-hero-content h1 em { font-style: italic; }
+.help-hero-copy { max-width: 500px; margin: 35px auto 0; color: var(--gray); font-size: 14px; line-height: 1.7; }
+
+/* --- FAQ --- */
+.help-faq { padding: 30px max(var(--gutter), (100% - var(--container)) / 2) 110px; }
+.help-faq h2 { margin: 0 0 45px; max-width: 640px; }
+.faq-list { border-top: 1px solid var(--line); }
+.faq-item { border-bottom: 1px solid var(--line); }
+.faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 22px 0;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    color: var(--black);
+}
+.faq-toggle { color: var(--gray); font-size: 18px; font-weight: 400; flex-shrink: 0; }
+.faq-item.open .faq-toggle { color: var(--black); }
+.faq-answer[hidden] { display: none; }
+.faq-answer p { margin: 0; padding: 0 0 24px; color: var(--gray); font-size: 13px; line-height: 1.8; max-width: 640px; }
+
+/* --- SHIPPING & RETURNS --- */
+.help-shipping {
+    padding: 110px max(var(--gutter), (100% - var(--container)) / 2);
+    background: var(--cream-dark);
+    border-top: 1px solid var(--line);
+}
+.help-shipping h2 { margin: 0 0 50px; max-width: 720px; }
+.help-panels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--line);
+    padding-top: 42px;
+}
+.help-panel { padding-right: 40px; }
+.help-panel + .help-panel { padding-left: 35px; border-left: 1px solid var(--line); }
+.help-panel h3 { margin: 0 0 12px; font-size: 13px; font-weight: 600; }
+.help-panel p { margin: 0 0 14px; color: var(--gray); font-size: 12px; line-height: 1.7; }
+.help-panel p:last-child { margin-bottom: 0; }
+.help-note { color: var(--black); }
+
+/* --- CONTACT --- */
+.help-contact { padding: 110px max(var(--gutter), (100% - var(--container)) / 2); border-top: 1px solid var(--line); }
+.help-contact h2 { margin: 0 0 20px; }
+.help-contact-copy { margin: 0 0 40px; max-width: 460px; color: var(--gray); font-size: 14px; line-height: 1.8; }
+.contact-form { max-width: 520px; }
+.contact-form label { display: block; margin: 22px 0 8px; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.contact-form label:first-of-type { margin-top: 0; }
+.contact-form label span { color: var(--gray); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.contact-form input, .contact-form textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: white;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--black);
+    outline: 0;
+}
+.contact-form input:focus, .contact-form textarea:focus { border-color: var(--black); }
+.contact-form textarea { resize: vertical; min-height: 130px; }
+.contact-form .button { margin-top: 26px; border: 0; cursor: pointer; text-transform: uppercase; }
+.contact-success { margin: 20px 0 0; color: var(--black); font-size: 13px; }
+.contact-success[hidden] { display: none; }
+
+/* --- PAYMENT / ACCOUNT --- */
+.help-meta { padding: 110px max(var(--gutter), (100% - var(--container)) / 2) 120px; border-top: 1px solid var(--line); }
+.help-meta-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(40px, 6vw, 90px); align-items: start; }
+.help-meta h2 { margin: 0 0 20px; }
+.help-meta p { margin: 0; max-width: 430px; color: var(--gray); font-size: 14px; line-height: 1.8; }
+.help-account-links { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 30px; }
+
+/* --- RESPONSIVE: same 1000px / 600px breakpoints as the rest of the site --- */
+@media (max-width: 1000px) {
+    .help-hero { padding-top: 80px; padding-bottom: 60px; }
+    .help-panels { grid-template-columns: repeat(2, 1fr); gap: 40px 0; }
+    .help-panel { padding-right: 30px; }
+    .help-panel + .help-panel { padding-left: 30px; }
+    .help-panel:nth-child(odd) { padding-left: 0; border-left: 0; }
+    .help-meta-grid { grid-template-columns: 1fr; gap: 60px; }
+}
+@media (max-width: 600px) {
+    .help-hero { padding: 70px 20px 50px; }
+    .help-hero-content h1 { font-size: 68px; }
+    .help-hero-copy { font-size: 13px; }
+    .help-faq, .help-contact, .help-meta { padding: 20px 20px 75px; }
+    .help-faq h2 { margin-bottom: 30px; }
+    .help-shipping { padding: 75px 20px; }
+    .help-shipping h2 { margin-bottom: 35px; }
+    .help-panels { display: block; padding-top: 30px; gap: 0; }
+    .help-panel, .help-panel + .help-panel { padding: 25px 0; border-left: 0; border-top: 1px solid var(--line); }
+    .help-panel:first-child { padding-top: 0; border-top: 0; }
+    .faq-question { font-size: 14px; padding: 18px 0; }
+    .help-contact-copy { margin-bottom: 30px; }
+}
