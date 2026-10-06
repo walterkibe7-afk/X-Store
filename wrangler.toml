@@ -1,9 +1,8 @@
 name = "x-store"
-compatibility_date = "2024-12-01"
-compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2026-10-06"
 
-# Build configuration for Cloudflare Pages
-pages_build_output_dir = "dist"
+[assets]
+directory = "./dist"
 
 # D1 Database binding
 [[d1_databases]]
@@ -36,7 +35,7 @@ port = 8787
 # Production environment (configure via dashboard)
 [env.production]
 name = "x-store-prod"
-compatibility_date = "2024-12-01"
+compatibility_date = "2026-10-06"
 
 [[env.production.d1_databases]]
 binding = "DB"
