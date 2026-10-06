@@ -11,11 +11,6 @@ database_name = "x-db"
 database_id = "YOUR_DATABASE_ID_HERE"
 migrations_dir = "migrations"
 
-# R2 Bucket binding for product images
-[[r2_buckets]]
-binding = "PRODUCT_IMAGES"
-bucket_name = "x-product-images"
-
 # KV namespace for sessions (optional, for future auth)
 [[kv_namespaces]]
 binding = "SESSIONS"
@@ -42,10 +37,6 @@ binding = "DB"
 database_name = "x-db-prod"
 database_id = "YOUR_PROD_DATABASE_ID_HERE"
 migrations_dir = "migrations"
-
-[[env.production.r2_buckets]]
-binding = "PRODUCT_IMAGES"
-bucket_name = "x-product-images-prod"
 
 [[env.production.kv_namespaces]]
 binding = "SESSIONS"
