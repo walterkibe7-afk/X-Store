@@ -1,15 +1,36 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dashboard — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
-Admin.requireAuth();
-Admin.mount('dashboard','Dashboard',"Welcome back. Here's what's happening with your store.",'<a class="btn btn-secondary" href="../index.html" target="_blank">View Store</a>',
-'<div class="cards4">'
-+'<div class="card stat"><div><small>Total Products</small><b>15</b><p>Across 2 categories</p></div><div class="stat-ic">+</div></div>'
-+'<div class="card stat"><div><small>Active Products</small><b>14</b><p>1 inactive</p></div><div class="stat-ic">o</div></div>'
-+'<div class="card stat"><div><small>Orders</small><b>24</b><p>3 this week</p></div><div class="stat-ic">#</div></div>'
-+'<div class="card stat"><div><small>Customers</small><b>8</b><p>2 new this month</p></div><div class="stat-ic">@</div></div></div>'
-+'<div class="card"><div class="card-h"><h2>Recent Orders</h2><a class="link" href="orders.html">View all orders</a></div>'
-+'<div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody>'
-+'<tr><td><strong>#X1024</strong></td><td>Jane Doe</td><td>2</td><td>$83</td><td>'+Admin.pill('Processing')+'</td><td>Oct 7</td></tr>'
-+'<tr><td><strong>#X1023</strong></td><td>Sarah Kim</td><td>1</td><td>$64</td><td>'+Admin.pill('Shipped')+'</td><td>Oct 6</td></tr>'
-+'<tr><td><strong>#X1022</strong></td><td>Mary Ann</td><td>3</td><td>$112</td><td>'+Admin.pill('Delivered')+'</td><td>Oct 5</td></tr>'
-+'</tbody></table></div></div>');
+let lastOrderIds = '';
+async function initDashboard() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  await paintDashboard(true);
+  setInterval(() => paintDashboard(false), 10000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') paintDashboard(false);
+  });
+}
+async function paintDashboard(first) {
+  const [stats, orders] = await Promise.all([
+    Admin.apiFetch('/api/admin/stats'),
+    Admin.apiFetch('/api/orders?limit=5')
+  ]);
+  const s = stats || { totalProducts: 0, activeProducts: 0, orders: 0, customers: 0, revenue: 0 };
+  const recent = (orders && orders.orders) ? orders.orders.slice(0, 5) : [];
+  const fingerprint = recent.map(o => o.id + ':' + o.status).join('|');
+  if (!first && lastOrderIds && fingerprint !== lastOrderIds) {
+    Admin.toast('New store activity — orders updated');
+  }
+  lastOrderIds = fingerprint;
+  Admin.mount('dashboard','Dashboard',"Welcome back. Here's what's happening with your store.",'<a class="btn btn-secondary" href="../index.html" target="_blank">View Store</a>',
+  '<div class="cards4">'
+  +'<div class="card stat"><div><small>Total Products</small><b>'+s.totalProducts+'</b><p>'+(s.totalProducts - s.activeProducts)+' inactive</p></div><div class="stat-ic">+</div></div>'
+  +'<div class="card stat"><div><small>Active Products</small><b>'+s.activeProducts+'</b><p>'+(s.totalProducts - s.activeProducts)+' inactive</p></div><div class="stat-ic">o</div></div>'
+  +'<div class="card stat"><div><small>Orders</small><b>'+s.orders+'</b><p>All time</p></div><div class="stat-ic">#</div></div>'
+  +'<div class="card stat"><div><small>Customers</small><b>'+s.customers+'</b><p>All time</p></div><div class="stat-ic">@</div></div></div>'
+  +'<div class="card"><div class="card-h"><h2>Recent Orders</h2><a class="link" href="orders.html">View all orders</a></div>'
+  +'<div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody>'
+  + (recent.length ? recent.map(o => '<tr><td><strong>'+Admin.esc(o.number || o.id)+'</strong></td><td>'+Admin.esc(o.shipping_name || o.shipping_email || '—')+'</td><td>'+(o.item_count || 0)+'</td><td>$'+Number(o.total).toFixed(2)+'</td><td>'+Admin.pill(o.status)+'</td><td>'+new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })+'</td></tr>').join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-2)">No orders yet</td></tr>')
+  +'</tbody></table></div></div>');
+}
+initDashboard();
 </script></body></html>

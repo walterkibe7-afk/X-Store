@@ -74,7 +74,7 @@ table.grid tbody tr:hover{background:#F8F7F8}
 .p-pending{background:var(--warning-bg);color:var(--warning)}
 .p-processing{background:var(--accent-soft);color:#5D5462}
 .p-shipped{background:#E6EAF0;color:#5B6B7A}
-.p-delivered,.p-active{background:var(--success-bg);color:var(--success)}
+.p-delivered,.p-active,.p-paid{background:var(--success-bg);color:var(--success)}
 .p-cancelled{background:var(--danger-bg);color:var(--danger)}
 .p-inactive{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
 .badge-tag{display:inline-flex;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--bg);border:1px solid var(--border);color:var(--text-2);text-transform:uppercase}
@@ -85,6 +85,10 @@ table.grid tbody tr:hover{background:#F8F7F8}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;cursor:pointer;color:var(--text-2)}
 .chip.active{background:var(--text);border-color:var(--text);color:#fff;font-weight:600}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-left:8px;vertical-align:middle;animation:live-pulse 2s ease-in-out infinite}
+@keyframes live-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+tr.row-flash{animation:row-flash 2.6s ease}
+@keyframes row-flash{0%,60%{background:#E9F5EC}100%{background:transparent}}
 .input,.select,textarea.input{width:100%;border:1px solid var(--border);border-radius:var(--r8);background:var(--surface);padding:10px 12px;font:inherit;color:var(--text)}
 .input:focus,.select:focus,textarea.input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
 label.f-label{display:block;font-size:13px;font-weight:500;margin:0 0 6px}

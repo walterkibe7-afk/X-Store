@@ -1,8 +1,28 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Customers — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
-Admin.requireAuth();
-const rows=[{n:'Jane Doe',e:'jane@example.com',o:'4 orders',t:'$214',j:'Oct 2, 2026'},{n:'Sarah Kim',e:'sarah@example.com',o:'2 orders',t:'$128',j:'Oct 3, 2026'},{n:'Mary Ann',e:'mary@example.com',o:'3 orders',t:'$196',j:'Oct 1, 2026'}];
-const body='<div class="card"><div class="card-b"><div class="toolbar"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="q" placeholder="Search customers..."></div></div><div class="table-wrap"><table class="grid"><thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Joined</th></tr></thead><tbody id="tb"></tbody></table></div><div id="eb"></div></div></div>';
-Admin.mount('customers','Customers','View and manage your customers.','',body);
-function render(){const q=(document.getElementById('q').value||'').toLowerCase();const list=rows.filter(r=>r.n.toLowerCase().includes(q)||r.e.includes(q));const tb=document.getElementById('tb'),eb=document.getElementById('eb');if(!list.length){tb.innerHTML='';eb.innerHTML='<div class="empty"><div class="empty-ic">@</div><h3>No customers yet</h3><p>Customers will appear here after their first order.</p></div>';return;}eb.innerHTML='';tb.innerHTML=list.map(r=>'<tr><td><a class="link" href="customer-detail.html"><strong>'+r.n+'</strong></a></td><td>'+r.e+'</td><td>'+r.o+'</td><td>'+r.t+'</td><td>'+r.j+'</td></tr>').join('');}
-document.getElementById('q').oninput=render;render();
+let rows = [];
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  const body='<div class="card"><div class="card-b"><div class="toolbar"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="q" placeholder="Search customers..."></div></div><div class="table-wrap"><table class="grid"><thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Joined</th></tr></thead><tbody id="tb"></tbody></table></div><div id="eb"></div></div></div>';
+  Admin.mount('customers','Customers','View and manage your customers.','',body);
+  const data = await Admin.apiFetch('/api/customers?limit=200');
+  rows = (data && data.customers) ? data.customers : [];
+  document.getElementById('q').oninput=render;
+  render();
+}
+function shortDate(iso) { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
+function render(){
+  const tb=document.getElementById('tb'),eb=document.getElementById('eb');
+  const q=(document.getElementById('q').value||'').toLowerCase();
+  let list = rows;
+  if (q) list = list.filter(r=>String(r.first_name||'').toLowerCase().includes(q)||String(r.last_name||'').toLowerCase().includes(q)||String(r.email||'').toLowerCase().includes(q));
+  if(!list.length){tb.innerHTML='';eb.innerHTML='<div class="empty"><div class="empty-ic">@</div><h3>No customers yet</h3><p>Customers will appear here after their first order.</p></div>';return;}
+  eb.innerHTML='';
+  tb.innerHTML=list.map(r=>{
+    const name = ((r.first_name||'')+' '+(r.last_name||'')).trim() || r.email || 'Customer';
+    const orders = Number(r.order_count||0);
+    return '<tr><td><a class="link" href="customer-detail.html?id='+encodeURIComponent(r.id)+'"><strong>'+Admin.esc(name)+'</strong></a></td><td>'+Admin.esc(r.email||'—')+'</td><td>'+orders+' order'+(orders===1?'':'s')+'</td><td>$'+Number(r.total_spent||0).toFixed(2)+'</td><td>'+shortDate(r.created_at)+'</td></tr>';
+  }).join('');
+}
+init();
 </script></body></html>

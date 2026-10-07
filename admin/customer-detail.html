@@ -1,7 +1,22 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Jane Doe — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
-Admin.requireAuth();
-const body='<a class="link" href="customers.html">Back to Customers</a>'
-+'<div class="cards4" style="margin-top:16px;grid-template-columns:repeat(3,1fr)"><div class="card stat"><div><small>Orders</small><b>4</b><p>Lifetime orders</p></div></div><div class="card stat"><div><small>Total spent</small><b>$214</b><p>Lifetime value</p></div></div><div class="card stat"><div><small>Customer since</small><b style="font-size:22px">Oct 2, 2026</b><p>Verified email</p></div></div></div>'
-+'<div class="card"><div class="card-h"><h2>Order History</h2></div><div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody><tr><td><strong>#X1024</strong></td><td>2</td><td>$83</td><td>'+Admin.pill('Processing')+'</td><td>Oct 7</td></tr><tr><td><strong>#X1018</strong></td><td>1</td><td>$59</td><td>'+Admin.pill('Delivered')+'</td><td>Sep 28</td></tr></tbody></table></div></div>';
-Admin.mount('customers','Jane Doe','jane@example.com','',body);
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Customer — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  const id = new URLSearchParams(location.search).get('id') || '';
+  if (!id) { location.href = 'customers.html'; return; }
+  const data = await Admin.apiFetch('/api/customers/' + encodeURIComponent(id));
+  const c = data && data.customer;
+  if (!c) { Admin.toast('Customer not found'); setTimeout(()=>location.href='customers.html',900); return; }
+  const name = ((c.first_name||'')+' '+(c.last_name||'')).trim() || c.email || 'Customer';
+  const orders = c.orders || [];
+  const spent = orders.reduce((s,o)=>s+Number(o.total||0),0);
+  const shortDate = iso => { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return ''; } };
+  const body='<a class="link" href="customers.html">Back to Customers</a>'
+  +'<div class="cards4" style="margin-top:16px;grid-template-columns:repeat(3,1fr)"><div class="card stat"><div><small>Orders</small><b>'+orders.length+'</b><p>Lifetime orders</p></div></div><div class="card stat"><div><small>Total spent</small><b>$'+spent.toFixed(2)+'</b><p>Lifetime value</p></div></div><div class="card stat"><div><small>Customer since</small><b style="font-size:22px">'+shortDate(c.created_at)+'</b><p>'+Admin.esc(c.email||'')+'</p></div></div></div>'
+  +'<div class="card"><div class="card-h"><h2>Order History</h2></div><div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody>'
+  +(orders.length ? orders.map(o=>'<tr><td><a class="link" href="order-detail.html?id='+encodeURIComponent(o.id)+'"><strong>'+Admin.esc(o.number||o.id)+'</strong></a></td><td>—</td><td>$'+Number(o.total||0).toFixed(2)+'</td><td>'+Admin.pill(o.status||'pending')+'</td><td>'+shortDate(o.created_at)+'</td></tr>').join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-2)">No orders yet</td></tr>')
+  +'</tbody></table></div></div>';
+  Admin.mount('customers', name, c.email || '', '', body);
+}
+init();
 </script></body></html>

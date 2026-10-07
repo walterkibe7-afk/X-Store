@@ -1,9 +1,26 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Settings — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
-Admin.requireAuth();
-const body='<div class="edit-grid"><div><div class="card"><div class="card-h"><h2>Store</h2></div><div class="card-b"><div class="f-row"><div class="f-group"><label class="f-label">Store Name</label><input class="input" value="Elle"></div><div class="f-group"><label class="f-label">Store Email</label><input class="input" value="hello@elle.com"></div></div><div class="f-row"><div class="f-group"><label class="f-label">Currency</label><select class="select"><option>USD ($)</option><option>KES</option></select></div><div class="f-group"><label class="f-label">Shipping Fee</label><input class="input" value="5"></div></div></div></div>'
-+'<div class="card" style="margin-top:16px"><div class="card-h"><h2>Store Defaults</h2></div><div class="card-b"><div class="f-row"><div class="f-group"><label class="f-label">Default shipping fee</label><input class="input" value="5"></div><div class="f-group"><label class="f-label">Default currency</label><select class="select"><option>USD</option></select></div></div></div></div></div>'
-+'<div><div class="card"><div class="card-h"><h2>Account</h2></div><div class="card-b"><div class="f-group"><label class="f-label">Admin Profile</label><input class="input" value="Admin"></div><button class="btn btn-secondary" style="width:100%;margin-bottom:10px">Change Password</button><button class="btn btn-ghost" style="width:100%" id="out">Logout</button></div></div></div></div>';
-Admin.mount('settings','Settings','Manage store and account preferences.','<button class="btn btn-primary" id="save">Save Changes</button>',body);
-document.getElementById('save').onclick=()=>Admin.toast('Settings saved');
-document.getElementById('out').onclick=()=>{localStorage.removeItem('xAdminAuth');location.href='login.html';};
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  const body='<div class="edit-grid"><div><div class="card"><div class="card-h"><h2>Store</h2></div><div class="card-b"><div class="f-row"><div class="f-group"><label class="f-label">Store Name</label><input class="input" id="s-name" value=""></div><div class="f-group"><label class="f-label">Store Email</label><input class="input" id="s-email" value=""></div></div><div class="f-row"><div class="f-group"><label class="f-label">Currency</label><select class="select" id="s-currency"><option>USD</option><option>KES</option></select></div><div class="f-group"><label class="f-label">Shipping Fee</label><input class="input" id="s-ship" value=""></div></div></div></div></div>'
+  +'<div><div class="card"><div class="card-h"><h2>Account</h2></div><div class="card-b"><button class="btn btn-ghost" style="width:100%" id="out">Logout</button></div></div></div></div>';
+  Admin.mount('settings','Settings','Manage store and account preferences.','<button class="btn btn-primary" id="save">Save Changes</button>',body);
+  const data = await Admin.apiFetch('/api/settings');
+  const s = (data && data.settings) || {};
+  document.getElementById('s-name').value = s.store_name || 'Elle';
+  document.getElementById('s-email').value = s.store_email || '';
+  document.getElementById('s-currency').value = s.currency || 'USD';
+  document.getElementById('s-ship').value = s.shipping_fee || '5';
+  document.getElementById('save').onclick = async ()=>{
+    const res = await Admin.apiFetch('/api/settings', { method:'PUT', body: JSON.stringify({
+      store_name: document.getElementById('s-name').value.trim(),
+      store_email: document.getElementById('s-email').value.trim(),
+      currency: document.getElementById('s-currency').value,
+      shipping_fee: document.getElementById('s-ship').value.trim()
+    }) });
+    Admin.toast(res && res.settings ? 'Settings saved' : 'Could not save settings');
+  };
+  document.getElementById('out').onclick=()=>Admin.logout();
+}
+init();
 </script></body></html>
