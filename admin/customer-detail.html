@@ -1,0 +1,7 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Jane Doe — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
+Admin.requireAuth();
+const body='<a class="link" href="customers.html">Back to Customers</a>'
++'<div class="cards4" style="margin-top:16px;grid-template-columns:repeat(3,1fr)"><div class="card stat"><div><small>Orders</small><b>4</b><p>Lifetime orders</p></div></div><div class="card stat"><div><small>Total spent</small><b>$214</b><p>Lifetime value</p></div></div><div class="card stat"><div><small>Customer since</small><b style="font-size:22px">Oct 2, 2026</b><p>Verified email</p></div></div></div>'
++'<div class="card"><div class="card-h"><h2>Order History</h2></div><div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody><tr><td><strong>#X1024</strong></td><td>2</td><td>$83</td><td>'+Admin.pill('Processing')+'</td><td>Oct 7</td></tr><tr><td><strong>#X1018</strong></td><td>1</td><td>$59</td><td>'+Admin.pill('Delivered')+'</td><td>Sep 28</td></tr></tbody></table></div></div>';
+Admin.mount('customers','Jane Doe','jane@example.com','',body);
+</script></body></html>

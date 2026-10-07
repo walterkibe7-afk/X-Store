@@ -225,7 +225,7 @@ const LAST_ORDER_KEY = "xLastOrder";
 // unique across rapid successive orders.
 function generateOrderNumber() {
     const stamp = Date.now().toString(36).toUpperCase().slice(-4);
-    return "X" + stamp + Math.floor(1000 + Math.random() * 9000);
+    return "ELLE" + stamp + Math.floor(1000 + Math.random() * 9000);
 }
 
 // "3-7 business days" -> { min: 3, max: 7 }

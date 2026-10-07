@@ -1,5 +1,5 @@
 /**
- * X Store API Worker
+ * Elle Store API Worker
  * Main entry point for Cloudflare Worker
  */
 
@@ -67,11 +67,9 @@ export default {
                     headers: { "Content-Type": "application/json", ...corsHeaders }
                 });
             }
+            // Fall through to assets for static files (HTML, CSS, JS, etc.)
             else {
-                response = new Response(JSON.stringify({ error: "Not found" }), {
-                    status: 404,
-                    headers: { "Content-Type": "application/json", ...corsHeaders }
-                });
+                return env.ASSETS.fetch(request);
             }
 
             // Add CORS headers to all responses

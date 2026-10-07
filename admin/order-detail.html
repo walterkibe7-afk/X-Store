@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Order #ELLE1024 — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
+Admin.requireAuth();
+const body = '<a class="link" href="orders.html">Back to Orders</a>'
++'<div class="detail-2" style="margin-top:16px"><div>'
++'<div class="card"><div class="card-h"><h2>Order Items</h2><select class="select" style="width:auto" id="st"><option>Pending</option><option selected>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></div><div class="card-b">'
++'<div class="order-item">'+Admin.thumb('S')+'<div style="flex:1"><strong>Silk Touch</strong><div style="font-size:12px;color:var(--text-2)">Qty 1</div></div><strong>$59</strong></div>'
++'<div class="order-item">'+Admin.thumb('A')+'<div style="flex:1"><strong>After Dark Oil</strong><div style="font-size:12px;color:var(--text-2)">Qty 1</div></div><strong>$28</strong></div>'
++'<div style="margin-top:12px"><div class="sum-row"><span>Subtotal</span><span>$87</span></div><div class="sum-row"><span>Shipping</span><span>$5</span></div><div class="sum-row total"><span>Total</span><span>$92</span></div></div>'
++'</div></div></div><div>'
++'<div class="card"><div class="card-h"><h2>Customer</h2></div><div class="card-b"><strong>Jane Doe</strong><div style="font-size:13px;color:var(--text-2)">jane@example.com<br>+254...</div></div></div>'
++'<div class="card" style="margin-top:16px"><div class="card-h"><h2>Shipping Address</h2></div><div class="card-b" style="font-size:13px;color:var(--text-2)">Jane Doe<br>Nairobi, Kenya<br>Discreet plain packaging</div></div>'
++'</div></div>';
+Admin.mount('orders','Order #ELLE1024','October 7, 2026','<button class="btn btn-primary" id="save">Save Status</button>', body);
+document.getElementById('save').onclick=()=>Admin.toast('Order '+document.getElementById('st').value.toLowerCase());
+</script></body></html>

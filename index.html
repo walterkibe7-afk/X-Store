@@ -3,37 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>X - Intimate Wellness</title>
-<meta name="description" content="X is intimate wellness made personal. Discover thoughtfully chosen products for pleasure, self-care and everyday wellbeing, delivered in discreet packaging.">
+<title>Elle - Intimate Wellness</title>
+<meta name="description" content="Elle is intimate wellness made personal. Discover thoughtfully chosen products for pleasure, self-care and everyday wellbeing, delivered in discreet packaging.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/hero-bg.jpg">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></symbol>
+<symbol id="icon-account" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></symbol>
+<symbol id="icon-cart" viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></symbol>
+<symbol id="icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></symbol>
+</svg>
 <div class="announcement"><p>Discreet packaging on every order</p></div>
+<div class="intro" data-intro aria-hidden="true" hidden>
+<div class="intro-word" data-intro-word><span class="intro-half" data-intro-el>El</span><span class="intro-slot" data-intro-slot><img class="intro-slide is-active" src="https://images.unsplash.com/photo-1600428877878-1a0e5a2d9a4a?auto=format&fit=crop&w=800&q=70" alt=""><img class="intro-slide" src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=70" alt=""><img class="intro-slide" src="assets/hero-bg.jpg" alt=""></span><span class="intro-half" data-intro-le>le</span></div>
+</div>
 <header class="navbar">
-<a href="index.html" class="logo">X</a>
+<a href="index.html" class="logo">Elle</a>
 <nav class="nav-links" id="site-nav">
-<a href="shop.html">Shop</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a><a href="about.html">About</a>
-<a href="quiz.html" class="quiz-nav">Find Your Match</a>
+<div class="nav-dropdown">
+<button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+Shop
+<svg class="chevron" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+</button>
+<div class="nav-dropdown-menu" role="menu">
+<a href="shop.html" role="menuitem">All Products</a>
+<a href="shop.html?category=intimate" role="menuitem">Intimate</a>
+<a href="shop.html?category=wellness" role="menuitem">Wellness</a>
+</div>
+</div>
+<a href="about.html">About</a>
 </nav>
 <div class="nav-actions">
-<button class="icon-button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></svg></button>
-<a href="login.html" class="icon-button" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></svg></a>
-<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg><span class="cart-count">0</span></a>
+<button class="icon-button" aria-label="Search"><svg aria-hidden="true"><use href="#icon-search"></use></svg></button>
+<a href="login.html" class="icon-button" aria-label="Account"><svg aria-hidden="true"><use href="#icon-account"></use></svg></a>
+<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg aria-hidden="true"><use href="#icon-cart"></use></svg><span class="cart-count">0</span></a>
 <button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
 </div>
 </header>
 <main>
-<section class="hero">
+<section class="hero" data-hero>
+<div class="hero-media" aria-hidden="true"><img src="assets/hero-bg.jpg" alt="" fetchpriority="high"></div>
 <div class="hero-content">
-<p class="eyebrow">INTIMATE WELLNESS, MADE PERSONAL</p>
-<h1>Feel good<br><em>your way.</em></h1>
-<p class="hero-description">Discover thoughtfully chosen products for pleasure, self-care and everything in between.</p>
-<div class="hero-buttons"><a href="shop.html" class="button button-dark">Shop now</a><a href="quiz.html" class="button button-light">Find your match</a></div>
+<h1 class="hero-title"><span class="hero-mask"><span>Elle</span></span></h1>
+<div class="hero-side"><p class="hero-description">Intimate wellness made personal — thoughtfully chosen products for pleasure, self-care and everything in between.</p>
+<div class="hero-buttons"><a href="shop.html" class="button button-dark">Shop now</a><a href="quiz.html" class="button button-light">Find your match</a></div></div>
 </div>
-<div class="hero-image"><div class="hero-image-overlay"></div><div class="hero-caption"><span>01</span><p>Explore your<br>wellness.</p></div></div>
 </section>
 <section class="trust-strip">
 <div><strong>Discreet delivery</strong><span>Your privacy comes first</span></div>
@@ -78,22 +97,22 @@
 </section>
 <section class="newsletter">
 <div class="newsletter-inner">
-<p class="eyebrow">THE X LIST</p>
+<p class="eyebrow">THE ELLE LIST</p>
 <h2>Good things,<br><em>in your inbox.</em></h2>
 <p>New products, private offers, wellness tips and recommendations. No spam.</p>
 <form class="newsletter-form"><label class="visually-hidden" for="newsletterEmail">Your email address</label><input type="email" id="newsletterEmail" name="email" placeholder="Your email address" autocomplete="email" required><button type="submit">Join <span>&rarr;</span></button></form>
-<small>By subscribing, you agree to receive emails from X.</small>
+<small>By subscribing, you agree to receive emails from Elle.</small>
 </div>
 </section>
 </main>
 <footer class="footer">
 <div class="footer-top">
-<div class="footer-brand"><a href="index.html" class="logo footer-logo">X</a><p>Intimate wellness,<br>made personal.</p></div>
+<div class="footer-brand"><a href="index.html" class="logo footer-logo">Elle</a><p>Intimate wellness,<br>made personal.</p></div>
 <div class="footer-column"><h4>Shop</h4><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
 <div class="footer-column"><h4>Help</h4><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
 <div class="footer-column"><h4>About</h4><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
 </div>
-<div class="footer-bottom"><span>&copy; 2026 X. All rights reserved.</span><span>Designed for intimate wellness.</span></div>
+<div class="footer-bottom"><span>&copy; 2026 Elle. All rights reserved.</span><span>Designed for intimate wellness.</span></div>
 </footer>
 <script src="cart-store.js"></script>
 <script src="products.js"></script>

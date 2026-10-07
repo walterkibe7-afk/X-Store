@@ -1,5 +1,5 @@
 /* =========================
-   ABOUT X
+   ABOUT ELLE
    Same design system as the rest of the site: Playfair headlines,
    DM Sans body, cream/black palette, the shared gutter/container rhythm.
    ========================= */
@@ -88,7 +88,7 @@
 }
 .value-card p { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.7; }
 
-/* --- THE X EXPERIENCE --- */
+/* --- THE ELLE EXPERIENCE --- */
 .experience-section {
     display: grid;
     grid-template-columns: 1fr 1fr;

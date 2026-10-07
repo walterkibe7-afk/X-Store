@@ -1,5 +1,6 @@
 name = "x-store"
 compatibility_date = "2026-10-06"
+main = "functions/api/[[path]].js"
 
 [assets]
 directory = "./dist"
@@ -8,19 +9,19 @@ directory = "./dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "x-db"
-database_id = "YOUR_DATABASE_ID_HERE"
+database_id = "c6856b79-41d9-4d12-8c72-430b52b113e3"
 migrations_dir = "migrations"
 
 # KV namespace for sessions (optional, for future auth)
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "YOUR_KV_NAMESPACE_ID_HERE"
-preview_id = "YOUR_KV_PREVIEW_ID_HERE"
+id = "5f1026c4058c4b43947a3b70ed830cb2"
+preview_id = "cf30aa850df64cda95ae33ee5a880927"
 
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
-ADMIN_EMAIL = "admin@x.com"
+ADMIN_EMAIL = "admin@elle.com"
 
 # Development settings
 [dev]
@@ -35,12 +36,13 @@ compatibility_date = "2026-10-06"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "x-db-prod"
-database_id = "YOUR_PROD_DATABASE_ID_HERE"
+database_id = "919f84b1-76e5-4b75-b16e-620a8f50caed"
 migrations_dir = "migrations"
 
 [[env.production.kv_namespaces]]
 binding = "SESSIONS"
-id = "YOUR_PROD_KV_NAMESPACE_ID_HERE"
+id = "7d5b4ef600744cdab36b8a1c21d15295"
 
 [env.production.vars]
 ENVIRONMENT = "production"
+ADMIN_EMAIL = "admin@elle.com"

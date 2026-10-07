@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Edit Product — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
+Admin.requireAuth();
+const isEdit = new URLSearchParams(location.search).has('id');
+const title = isEdit ? 'Edit Product' : 'Add Product';
+const body = '<a class="link" href="products.html">Back to Products</a><div class="edit-grid" style="margin-top:16px">'
++'<div class="card"><div class="card-h"><h2>Product Information</h2></div><div class="card-b">'
++'<div class="f-group"><label class="f-label">Product Name</label><input class="input" value="Silk Touch"></div>'
++'<div class="f-row"><div class="f-group"><label class="f-label">Category</label><select class="select" id="cat"><option>Intimate</option><option>Wellness</option></select></div>'
++'<div class="f-group"><label class="f-label">Subcategory</label><select class="select" id="sub"></select></div></div>'
++'<div class="f-row"><div class="f-group"><label class="f-label">Price</label><input class="input" value="$59"></div>'
++'<div class="f-group"><label class="f-label">Compare-at Price</label><input class="input" placeholder="$"></div></div>'
++'<div class="f-group"><label class="f-label">Badge</label><select class="select"><option>BEST SELLER</option><option>NEW</option><option>SALE</option><option value="">No badge</option></select></div>'
++'<div class="f-group"><label class="f-label">Description</label><textarea class="input" rows="4">Thoughtfully designed for a more personal kind of self-care.</textarea></div>'
++'</div></div>'
++'<div class="card"><div class="card-h"><h2>Product Images</h2></div><div class="card-b"><div class="img-slots">'
++['Hero','Lifestyle','Detail'].map(s=>'<div class="img-slot"><div><small>'+s+'</small><div style="font-size:12px;color:var(--text-2)">Neutral placeholder</div><div style="margin-top:8px;display:flex;gap:6px;justify-content:center"><button class="btn btn-secondary btn-sm">Replace</button><button class="btn btn-ghost btn-sm">Remove</button></div></div></div>').join('')
++'</div><p class="hint">Discreet neutral placeholders only. No explicit imagery.</p><div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end"><a class="btn btn-secondary" href="products.html">Cancel</a><button class="btn btn-primary" id="save">Save Changes</button></div></div></div></div>';
+Admin.mount('products', title, isEdit ? 'Update product details and catalogue status.' : 'Add a new product to your catalogue.', '<button class="btn btn-primary" id="saveTop">Save Changes</button>', body);
+function fillSub(){ const c=document.getElementById('cat').value; document.getElementById('sub').innerHTML = Admin.TAXONOMY[c].map(s=>'<option>'+s+'</option>').join(''); }
+document.getElementById('cat').onchange = fillSub; fillSub();
+const done = ()=>{ Admin.toast('Product saved'); setTimeout(()=>location.href='products.html',700); };
+document.getElementById('save').onclick = done; document.getElementById('saveTop').onclick = done;
+</script></body></html>

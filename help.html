@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Help &amp; Support - X</title>
-<meta name="description" content="Find answers about orders, delivery, returns, payments and accounts, or send the X team a message.">
+<title>Help &amp; Support - Elle</title>
+<meta name="description" content="Find answers about orders, delivery, returns, payments and accounts, or send the Elle team a message.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,16 +12,33 @@
 <link rel="stylesheet" href="help.css">
 </head>
 <body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></symbol>
+<symbol id="icon-account" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></symbol>
+<symbol id="icon-cart" viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></symbol>
+<symbol id="icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></symbol>
+</svg>
 <div class="announcement"><p>Discreet packaging on every order</p></div>
 <header class="navbar">
-<a href="index.html" class="logo">X</a>
+<a href="index.html" class="logo">Elle</a>
 <nav class="nav-links" id="site-nav">
-<a href="shop.html">Shop</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a><a href="about.html">About</a><a href="quiz.html" class="quiz-nav">Find Your Match</a>
+<div class="nav-dropdown">
+<button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+Shop
+<svg class="chevron" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+</button>
+<div class="nav-dropdown-menu" role="menu">
+<a href="shop.html" role="menuitem">All Products</a>
+<a href="shop.html?category=intimate" role="menuitem">Intimate</a>
+<a href="shop.html?category=wellness" role="menuitem">Wellness</a>
+</div>
+</div>
+<a href="about.html">About</a>
 </nav>
 <div class="nav-actions">
-<button class="icon-button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></svg></button>
-<a href="login.html" class="icon-button" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></svg></a>
-<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg><span class="cart-count">0</span></a>
+<button class="icon-button" aria-label="Search"><svg aria-hidden="true"><use href="#icon-search"></use></svg></button>
+<a href="login.html" class="icon-button" aria-label="Account"><svg aria-hidden="true"><use href="#icon-account"></use></svg></a>
+<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg aria-hidden="true"><use href="#icon-cart"></use></svg><span class="cart-count">0</span></a>
 <button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
 </div>
 </header>
@@ -42,7 +59,7 @@
 <div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>How long does delivery take?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Delivery times depend on your location and the delivery option selected at checkout. Your estimated delivery information is shown during checkout.</p></div></div>
 <div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>Can I return an item?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Return eligibility depends on the product and its condition. Please contact us before sending anything back so we can guide you through the process.</p></div></div>
 <div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>What payment methods do you accept?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Available payment methods are shown during checkout.</p></div></div>
-<div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>Do I need an account to place an order?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Yes. An X account is required to complete checkout and lets you view your orders and account information.</p></div></div>
+<div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>Do I need an account to place an order?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Yes. An Elle account is required to complete checkout and lets you view your orders and account information.</p></div></div>
 <div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>How can I track my order?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Once order tracking is available, tracking information will be provided through your order details.</p></div></div>
 <div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>Can I cancel my order?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Contact us as soon as possible if you need to cancel an order. Cancellation depends on whether the order has already been processed or shipped.</p></div></div>
 <div class="faq-item"><button class="faq-question" type="button" aria-expanded="false"><span>What happens if I receive a damaged or incorrect item?</span><span class="faq-toggle" aria-hidden="true">+</span></button><div class="faq-answer" hidden><p>Contact us with your order details as soon as possible so we can help resolve the issue.</p></div></div>
@@ -64,7 +81,7 @@
 <div class="help-panel">
 <h3>Returns</h3>
 <p>Return eligibility varies by product. For hygiene and safety reasons, some intimate products may not be eligible for return once opened or used.</p>
-<p class="help-note">Before returning anything: please contact X first so we can confirm whether your order qualifies for a return.</p>
+<p class="help-note">Before returning anything: please contact Elle first so we can confirm whether your order qualifies for a return.</p>
 </div>
 </div>
 </section>
@@ -97,7 +114,7 @@
 <div>
 <p class="section-label">ACCOUNT &amp; ORDERS</p>
 <h2>Your account, your orders.</h2>
-<p>Your X account lets you complete checkout and access your order information.</p>
+<p>Your Elle account lets you complete checkout and access your order information.</p>
 <div class="help-account-links">
 <a href="login.html" class="text-link">Log in <span>&rarr;</span></a>
 <a href="signup.html" class="text-link">Create account <span>&rarr;</span></a>
@@ -110,12 +127,12 @@
 <!-- __HELP_PART6__ -->
 <footer class="footer">
 <div class="footer-top">
-<div class="footer-brand"><a href="index.html" class="logo">X</a><p>Intimate wellness,<br>made personal.</p></div>
+<div class="footer-brand"><a href="index.html" class="logo">Elle</a><p>Intimate wellness,<br>made personal.</p></div>
 <div class="footer-column"><h4>Shop</h4><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
 <div class="footer-column"><h4>Help</h4><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
 <div class="footer-column"><h4>About</h4><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
 </div>
-<div class="footer-bottom"><span>&copy; 2026 X. All rights reserved.</span><span>Made for feeling good.</span></div>
+<div class="footer-bottom"><span>&copy; 2026 Elle. All rights reserved.</span><span>Made for feeling good.</span></div>
 </footer>
 <script src="cart-store.js"></script>
 <script src="products.js"></script>

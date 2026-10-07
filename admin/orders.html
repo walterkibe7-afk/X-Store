@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Orders — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
+Admin.requireAuth();
+const rows = [
+  { id:'#X1024', name:'Jane Doe', items:'2 items', total:'$83', status:'Processing', date:'Oct 7, 2026' },
+  { id:'#X1023', name:'Sarah Kim', items:'1 item', total:'$64', status:'Shipped', date:'Oct 6, 2026' },
+  { id:'#X1022', name:'Mary Ann', items:'3 items', total:'$112', status:'Delivered', date:'Oct 5, 2026' }
+];
+const body = '<div class="card"><div class="card-b">'
++'<div class="toolbar"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="q" placeholder="Search orders..."></div>'
++'<div class="chips" id="chips"><button class="chip active">All</button><button class="chip">Pending</button><button class="chip">Processing</button><button class="chip">Shipped</button><button class="chip">Delivered</button><button class="chip">Cancelled</button></div></div>'
++'<div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody id="tb"></tbody></table></div><div id="emptyBox"></div>'
++'</div></div>';
+Admin.mount('orders','Orders','Manage customer orders.','', body);
+function render(f){
+  const q=(document.getElementById('q').value||'').toLowerCase();
+  let list = rows.filter(r=>(f==='All'||r.status===f)&&(r.id.toLowerCase().includes(q)||r.name.toLowerCase().includes(q)));
+  const tb=document.getElementById('tb'), eb=document.getElementById('emptyBox');
+  if(!list.length){ tb.innerHTML=''; eb.innerHTML='<div class="empty"><div class="empty-ic">#</div><h3>No orders yet</h3><p>Orders will appear here when customers purchase from your store.</p></div>'; return; }
+  eb.innerHTML='';
+  tb.innerHTML=list.map(r=>'<tr><td><a class="link" href="order-detail.html?id=X1024"><strong>'+r.id+'</strong></a></td><td>'+r.name+'</td><td>'+r.items+'</td><td>'+r.total+'</td><td>'+Admin.pill(r.status)+'</td><td>'+r.date+'</td></tr>').join('');
+}
+document.getElementById('q').oninput=()=>render(document.querySelector('.chip.active').textContent);
+document.querySelectorAll('#chips .chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');render(c.textContent);});
+render('All');
+</script></body></html>

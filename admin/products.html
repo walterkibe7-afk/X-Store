@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Products — Elle Admin</title><link rel="stylesheet" href="css/admin.css"></head><body><script src="js/admin.js"></script><script>
+Admin.requireAuth();
+const rows = [
+  { name:'Silk Touch', cat:'Intimate / Toys', price:'$59', active:true, badge:'BEST SELLER', updated:'Oct 7' },
+  { name:'After Dark Oil', cat:'Wellness / Body & Massage', price:'$28', active:true, badge:'', updated:'Oct 6' },
+  { name:'Midnight Gummies', cat:'Wellness / Gummies', price:'$24', active:true, badge:'NEW', updated:'Oct 5' },
+  { name:'Velvet Mini', cat:'Intimate / Toys', price:'$45', active:true, badge:'', updated:'Oct 4' },
+  { name:'Slow Down Oil', cat:'Wellness / Body & Massage', price:'$22', active:true, badge:'SALE', updated:'Oct 3' }
+];
+const body = '<div class="card"><div class="card-b">'
+  + '<div class="toolbar"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="q" placeholder="Search products..."></div>'
+  + '<div class="chips" id="chips"><button class="chip active">All</button><button class="chip">Intimate</button><button class="chip">Wellness</button><button class="chip">Active</button><button class="chip">Inactive</button></div></div>'
+  + '<div class="table-wrap"><table class="grid"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Badge</th><th>Updated</th><th>Actions</th></tr></thead><tbody id="tb"></tbody></table></div>'
+  + '<div id="emptyBox"></div><div class="pager"><span>Page 1 of 2</span><button class="btn btn-secondary btn-sm">Prev</button><button class="btn btn-secondary btn-sm">Next</button></div>'
+  + '</div></div>'
+  + '<div class="modal-back" id="delModal"><div class="modal"><h3>Delete Product?</h3><p>Are you sure you want to delete this product?</p><div class="modal-actions"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-danger" data-close>Delete Product</button></div></div></div>'
+  + '<div class="modal-back" id="deModal"><div class="modal"><h3>Deactivate Product?</h3><p>This product will no longer appear in the store.</p><div class="modal-actions"><button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" data-close>Deactivate</button></div></div></div>';
+Admin.mount('products','Products','Manage your products and catalogue.','<a class="btn btn-primary" href="product-edit.html">+ Add Product</a>', body);
+function render(filter) {
+  const tb = document.getElementById('tb'), empty = document.getElementById('emptyBox');
+  let list = rows;
+  if (filter && filter !== 'All') {
+    if (filter==='Active') list = rows.filter(r=>r.active);
+    else if (filter==='Inactive') list = rows.filter(r=>!r.active);
+    else list = rows.filter(r=>r.cat.indexOf(filter)===0);
+  }
+  const q = (document.getElementById('q').value||'').toLowerCase();
+  if (q) list = list.filter(r=>r.name.toLowerCase().includes(q));
+  if (!list.length) { tb.innerHTML=''; empty.innerHTML='<div class="empty"><div class="empty-ic">+</div><h3>No products yet</h3><p>Add your first product to start building your catalogue.</p><a class="btn btn-primary" href="product-edit.html">+ Add Product</a></div>'; return; }
+  empty.innerHTML='';
+  tb.innerHTML = list.map(r=>'<tr><td><div class="prod-cell">'+Admin.thumb(r.name[0])+'<div><strong>'+r.name+'</strong><span>'+r.cat+'</span></div></div></td><td>'+r.cat+'</td><td>'+r.price+'</td><td>'+(r.active?Admin.pill('Active'):Admin.pill('Inactive'))+'</td><td>'+Admin.badgeTag(r.badge)+'</td><td>'+r.updated+'</td><td><div class="kebab"><button class="btn btn-ghost btn-sm">...</button><div class="kebab-menu"><button data-edit>Edit</button><button>Duplicate</button><button data-de>Deactivate</button><button class="danger" data-del>Delete</button></div></div></td></tr>').join('');
+  tb.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>location.href='product-edit.html?id=silk-touch');
+  tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>document.getElementById('delModal').classList.add('open'));
+  tb.querySelectorAll('[data-de]').forEach(b=>b.onclick=()=>document.getElementById('deModal').classList.add('open'));
+  document.querySelectorAll('.kebab > button').forEach(b=>b.onclick=e=>{e.stopPropagation();b.parentElement.classList.toggle('open');});
+}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal-back').classList.remove('open'));
+document.getElementById('q').oninput=()=>render(document.querySelector('.chip.active').textContent);
+document.querySelectorAll('#chips .chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('#chips .chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');render(c.textContent);});
+render('All');
+</script></body></html>

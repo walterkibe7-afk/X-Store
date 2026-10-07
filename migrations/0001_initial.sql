@@ -91,8 +91,8 @@ CREATE TABLE settings (
 
 -- Insert default settings
 INSERT INTO settings (key, value) VALUES
-    ('store_name', 'X'),
-    ('store_email', 'hello@x.com'),
+    ('store_name', 'Elle'),
+    ('store_email', 'hello@elle.com'),
     ('currency', 'USD'),
     ('shipping_fee', '5');
 
