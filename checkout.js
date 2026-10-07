@@ -206,8 +206,13 @@ if (typeof window !== "undefined" && window && typeof window.addEventListener ==
 }
 
 // Payment method
-// "paybill" = manual M-Pesa Paybill to the business number shown in
-// checkout.html. Orders stay pending until the payment is confirmed.
+// "paybill" = manual M-Pesa Paybill to the business number below.
+// ELLE_PAYBILL is the single place to change it if I&M issues a new one.
+// Orders stay pending until the payment is confirmed.
+const ELLE_PAYBILL = "500500";
+document.querySelectorAll(".paybill-number").forEach((el) => {
+    el.textContent = ELLE_PAYBILL;
+});
 const paybillFields = document.querySelector(".paybill-fields");
 function selectedPaymentMethod() {
     const active = document.querySelector(".payment-method.active");

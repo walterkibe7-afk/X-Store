@@ -127,6 +127,20 @@ function renderConfirmation() {
 
     if (orderItemsEl) orderItemsEl.innerHTML = order.items.map(buildItem).join("");
 
+    // Paybill orders are confirmed asynchronously (bank callback or manual
+    // review), so say "received, awaiting payment" instead of "confirmed".
+    const payMethod = order.payment && order.payment.method;
+    const payRef = order.payment && order.payment.reference;
+    if (payMethod === "paybill") {
+        setText(document.getElementById("confirmation-title"), "ORDER RECEIVED");
+        const intro = document.querySelector(".preparing-msg");
+        if (intro) {
+            intro.textContent = "We received your order and are waiting for your M-Pesa payment" +
+                (payRef ? " (code " + payRef + ")" : "") +
+                ". We will confirm and dispatch as soon as it clears.";
+        }
+    }
+
     const subtotal = typeof order.subtotal === "number"
         ? order.subtotal
         : order.items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);

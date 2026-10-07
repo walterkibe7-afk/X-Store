@@ -181,6 +181,10 @@ export default {
                 const id = path.split("/").pop();
                 response = await handleUpdateOrder(id, request, env);
             }
+            // Payments callback (bank-verified, public route with its own secret)
+            else if (path === "/api/payments/callback" && method === "POST") {
+                response = await handlePaymentCallback(request, env);
+            }
             // Customers routes
             else if (path === "/api/customers" && method === "GET") {
                 response = await handleGetCustomers(request, env);
@@ -806,6 +810,89 @@ async function handleCreateOrder(request, env) {
             items: orderItems.map(i => ({ ...i, lineTotal: i.price * i.quantity }))
         }
     }, 201);
+}
+
+// =========================
+// BANK PAYMENT CALLBACK (PUBLIC, SECRET-VERIFIED)
+// Receives I&M Business Connect instant payment notifications for M-Pesa
+// Paybill collections. The customer pays with the Elle order number as the
+// account reference; this endpoint matches it and flips pending -> paid.
+//
+// Configure in Cloudflare (never commit the real value):
+//   wrangler secret put PAYMENT_CALLBACK_SECRET
+// I&M sends: POST /api/payments/callback with a shared-secret header.
+// Accepted (flexible keys, since bank specs vary by onboarding):
+//   { account_reference | BillRefNumber | account,
+//     transaction_id | TransID | transaction,
+//     amount | TransAmount, msisdn | MSISDN, business_number }
+// Auth:  Authorization: Bearer <secret>  OR  x-callback-secret: <secret>
+// =========================
+
+async function handlePaymentCallback(request, env) {
+    const secret = env.PAYMENT_CALLBACK_SECRET || env.PAYMENT_SECRET || "";
+    if (!secret) {
+        return jsonResponse({ error: "Payment callbacks are not configured" }, 503);
+    }
+
+    const auth = request.headers.get("authorization") || "";
+    const headerSecret = request.headers.get("x-callback-secret") || "";
+    const provided = auth.toLowerCase().startsWith("bearer ")
+        ? auth.slice(7).trim()
+        : headerSecret.trim();
+    if (!provided || provided !== secret) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
+    let body = null;
+    try {
+        body = await request.json();
+    } catch (e) {
+        return jsonResponse({ error: "Invalid JSON body" }, 400);
+    }
+    const data = (body && typeof body === "object") ? body : {};
+
+    const ref = String(
+        data.account_reference ?? data.BillRefNumber ?? data.account ??
+        data.reference ?? ""
+    ).trim().toUpperCase();
+    const txId = String(
+        data.transaction_id ?? data.TransID ?? data.transaction ??
+        data.receipt ?? ""
+    ).trim();
+    const amountRaw = data.amount ?? data.TransAmount ?? null;
+    const amount = amountRaw === null || amountRaw === "" ? null : Number(amountRaw);
+
+    if (!ref) {
+        return jsonResponse({ error: "Missing account reference" }, 400);
+    }
+
+    const order = await env.DB.prepare(
+        "SELECT * FROM orders WHERE UPPER(number) = ?"
+    ).bind(ref).first();
+    if (!order) {
+        return jsonResponse({ error: "Order not found for reference", reference: ref }, 404);
+    }
+    if (order.status === "paid") {
+        return jsonResponse({ ok: true, already: true, number: order.number });
+    }
+    if (order.status !== "pending") {
+        return jsonResponse({ error: "Order is not payable", status: order.status }, 409);
+    }
+
+    // Amount mismatch: record the receipt but keep the order pending for
+    // manual review instead of marking the wrong amount paid.
+    if (amount !== null && Number.isFinite(amount) && Math.abs(amount - Number(order.total)) > 0.01) {
+        await env.DB.prepare(
+            "UPDATE orders SET payment_reference = ?, updated_at = ? WHERE id = ?"
+        ).bind(txId || order.payment_reference || null, new Date().toISOString(), order.id).run();
+        return jsonResponse({ ok: true, held: true, reason: "amount mismatch", number: order.number }, 202);
+    }
+
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+        "UPDATE orders SET status = 'paid', payment_reference = ?, paid_at = ?, updated_at = ? WHERE id = ?"
+    ).bind(txId || order.payment_reference || null, now, now, order.id).run();
+    return jsonResponse({ ok: true, number: order.number, paid_at: now });
 }
 
 // =========================
