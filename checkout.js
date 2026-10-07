@@ -209,10 +209,25 @@ if (typeof window !== "undefined" && window && typeof window.addEventListener ==
 // "paybill" = manual M-Pesa Paybill to the business number below.
 // ELLE_PAYBILL is the single place to change it if I&M issues a new one.
 // Orders stay pending until the payment is confirmed.
-const ELLE_PAYBILL = "500500";
+const ELLE_PAYBILL = "542542";
 document.querySelectorAll(".paybill-number").forEach((el) => {
     el.textContent = ELLE_PAYBILL;
 });
+// The M-Pesa account reference must be the order number so bank payments
+// auto-match. Pre-generate it when Paybill is picked so the customer sees
+// the exact reference BEFORE paying, and submit the same number with the
+// order (the backend adopts it when still unused).
+let paybillOrderNumber = "";
+function ensurePaybillNumber() {
+    if (!paybillOrderNumber) {
+        const stamp = Date.now().toString(36).toUpperCase().slice(-4);
+        paybillOrderNumber = "ELLE" + stamp + Math.floor(1000 + Math.random() * 9000);
+    }
+    document.querySelectorAll(".paybill-account").forEach((el) => {
+        el.textContent = paybillOrderNumber;
+    });
+    return paybillOrderNumber;
+}
 const paybillFields = document.querySelector(".paybill-fields");
 function selectedPaymentMethod() {
     const active = document.querySelector(".payment-method.active");
@@ -226,6 +241,7 @@ paymentMethods.forEach((method) => {
         if (paymentFields) paymentFields.style.display = selected === "card" ? "block" : "none";
         if (mobileMoneyFields) mobileMoneyFields.style.display = selected === "mobile" ? "block" : "none";
         if (paybillFields) paybillFields.style.display = selected === "paybill" ? "block" : "none";
+        if (selected === "paybill") ensurePaybillNumber();
     });
 });
 
@@ -660,7 +676,8 @@ if (placeOrderButton) {
             country: order.address.country,
             items: lines.map(l => ({ id: l.id, quantity: l.quantity })),
             delivery: { method: delivery.name },
-            payment: { method: payMethod, reference: payReference }
+            payment: { method: payMethod, reference: payReference },
+            number: (payMethod === "paybill" && paybillOrderNumber) ? paybillOrderNumber : undefined
         };
 
         // Try API first
