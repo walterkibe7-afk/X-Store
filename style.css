@@ -369,9 +369,14 @@ html.is-slot .intro-slot { width: 1.7em; }
 }
 .intro-slide.is-active { opacity: 1; transform: scale(1); transition: opacity .35s ease, transform 1.2s ease; }
 html.is-expand .intro-slot {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     width: 100vw;
     height: 100vh;
     border-radius: 0;
+    z-index: 1;
 }
 html.is-expand .intro-word { gap: 0; }
 html.is-expand [data-intro-el] { transform: translateY(-110vh); }
