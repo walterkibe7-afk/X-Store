@@ -554,9 +554,13 @@ document.addEventListener("click", (event) => {
         await wait(600);
         root.classList.add("is-expand");    // 4. expands, pushing words off-screen
         await wait(950);
-        overlay.hidden = true;              // 5. Elle bottom-left, CTAs other side
-        root.classList.remove("is-intro", "is-slot", "is-expand");
-        root.classList.add("hero-done");
+        // 5. crossfade the veil instead of cutting: the hero beneath is the
+        // same full-viewport frame, so there is no skipped beat. Text rises
+        // under the fading veil while the glass navbar fades in above it.
+        root.classList.add("is-leaving", "hero-done");
+        await wait(650);
+        overlay.hidden = true;              // 6. Elle bottom-left, CTAs stacked left
+        root.classList.remove("is-intro", "is-slot", "is-expand", "is-leaving");
     })();
 })();
 
