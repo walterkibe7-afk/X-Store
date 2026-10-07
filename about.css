@@ -1,6 +1,6 @@
 /* =========================
    ABOUT ELLE
-   Same design system as the rest of the site: Playfair headlines,
+   Same design system as the rest of the site: DM Sans headlines,
    DM Sans body, cream/black palette, the shared gutter/container rhythm.
    ========================= */
 
@@ -20,7 +20,7 @@
 }
 .about-hero-content h1 {
     margin: 0;
-    font-family: "Playfair Display", serif;
+    font-family: "DM Sans", sans-serif;
     font-size: clamp(44px, 5.5vw, 76px);
     font-weight: 500;
     line-height: .98;
@@ -81,7 +81,7 @@
 .value-number { display: block; margin-bottom: 26px; color: var(--gray); font-size: 10px; letter-spacing: .1em; }
 .value-card h3 {
     margin: 0 0 12px;
-    font-family: "Playfair Display", serif;
+    font-family: "DM Sans", sans-serif;
     font-size: 24px;
     font-weight: 500;
     text-transform: none;

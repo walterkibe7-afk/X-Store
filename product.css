@@ -16,7 +16,7 @@
 .thumbnail.active { opacity: 1; outline: 2px solid var(--black); outline-offset: -2px; }
 .product-info { padding-top: 12px; min-width: 0; }
 .product-info .product-category { margin: 0 0 15px; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--gray); }
-.product-info h1 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(48px, 5vw, 78px); font-weight: 500; line-height: .95; letter-spacing: -.04em; }
+.product-info h1 { margin: 0; font-family: "DM Sans", sans-serif; font-size: clamp(48px, 5vw, 78px); font-weight: 500; line-height: .95; letter-spacing: -.04em; }
 .product-rating { display: flex; align-items: center; gap: 12px; margin-top: 24px; font-size: 13px; }
 .product-rating .stars { letter-spacing: 2px; font-size: 12px; }
 .product-rating a { color: var(--gray); text-decoration: underline; text-underline-offset: 3px; }
@@ -35,7 +35,7 @@
 .add-to-cart:hover { background: #34312e; }
 .why-section { padding: 100px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: .7fr 1.3fr; gap: 100px; }
 .why-heading p, .reviews-header p, .related-heading p, .product-quiz p { margin: 0 0 14px; font-size: 10px; font-weight: 700; letter-spacing: .15em; color: var(--gray); }
-.why-heading h2 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(38px, 4vw, 58px); font-weight: 500; line-height: 1.05; letter-spacing: -.035em; }
+.why-heading h2 { margin: 0; font-family: "DM Sans", sans-serif; font-size: clamp(38px, 4vw, 58px); font-weight: 500; line-height: 1.05; letter-spacing: -.035em; }
 .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
 .why-card { border-top: 1px solid var(--line); padding-top: 18px; }
 .why-card span { color: var(--gray); font-size: 11px; }
@@ -43,9 +43,9 @@
 .why-card p { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.7; }
 .reviews-section { padding: 110px 0; }
 .reviews-header { display: flex; align-items: end; justify-content: space-between; margin-bottom: 55px; }
-.reviews-header h2, .related-heading h2 { margin: 0; font-family: "Playfair Display", serif; font-size: clamp(38px, 4vw, 56px); font-weight: 500; letter-spacing: -.035em; }
+.reviews-header h2, .related-heading h2 { margin: 0; font-family: "DM Sans", sans-serif; font-size: clamp(38px, 4vw, 56px); font-weight: 500; letter-spacing: -.035em; }
 .overall-rating { display: flex; align-items: center; gap: 18px; }
-.overall-rating strong { font-family: "Playfair Display", serif; font-size: 52px; font-weight: 500; }
+.overall-rating strong { font-family: "DM Sans", sans-serif; font-size: 52px; font-weight: 500; }
 .overall-rating .stars { letter-spacing: 2px; font-size: 12px; }
 .overall-rating span { display: block; margin-top: 4px; color: var(--gray); font-size: 11px; }
 .review-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -72,11 +72,11 @@
 .related-info strong { font-size: 13px; }
 .product-quiz { min-height: 470px; margin-bottom: 120px; padding: 70px; display: flex; align-items: center; background: linear-gradient(110deg, rgba(40,30,25,.92), rgba(93,68,56,.72)), radial-gradient(circle at 80% 30%, #b59483, #332a26); color: white; }
 .product-quiz p { color: rgba(255,255,255,.65); }
-.product-quiz h2 { margin: 0 0 35px; font-family: "Playfair Display", serif; font-size: clamp(50px, 6vw, 82px); font-weight: 500; line-height: .98; letter-spacing: -.04em; }
+.product-quiz h2 { margin: 0 0 35px; font-family: "DM Sans", sans-serif; font-size: clamp(50px, 6vw, 82px); font-weight: 500; line-height: .98; letter-spacing: -.04em; }
 .product-quiz .button-dark { background: white; color: var(--black); }
 .review-card { padding: 30px; background: var(--cream-dark); }
 .review-card .stars { margin-bottom: 45px; letter-spacing: 2px; font-size: 12px; }
-.review-card p { margin: 0 0 30px; font-family: "Playfair Display", serif; font-size: 22px; line-height: 1.35; }
+.review-card p { margin: 0 0 30px; font-family: "DM Sans", sans-serif; font-size: 22px; line-height: 1.35; }
 .review-card span { color: var(--gray); font-size: 11px; }
 .buy-now { width: 100%; height: 56px; margin-top: 10px; border: 1px solid var(--black); background: transparent; color: var(--black); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s ease, color .2s ease; }
 .buy-now:hover { background: var(--black); color: white; }

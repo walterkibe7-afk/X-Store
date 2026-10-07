@@ -1,6 +1,6 @@
 /* =========================
    HELP
-   Same design system as the rest of the site: Playfair headlines,
+   Same design system as the rest of the site: DM Sans headlines,
    DM Sans body, cream/black palette, the shared gutter/container rhythm.
    ========================= */
 
@@ -14,7 +14,7 @@
 .help-hero-content { max-width: 850px; }
 .help-hero-content h1 {
     margin: 0;
-    font-family: "Playfair Display", serif;
+    font-family: "DM Sans", sans-serif;
     font-size: clamp(65px, 9vw, 120px);
     line-height: .88;
     letter-spacing: -.05em;

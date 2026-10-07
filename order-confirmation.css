@@ -13,7 +13,7 @@
     border-bottom: 1px solid var(--line);
     background: var(--white);
 }
-.header .logo a { font-family: "Playfair Display", serif; font-size: 34px; line-height: 1; }
+.header .logo a { font-family: "DM Sans", sans-serif; font-size: 34px; line-height: 1; }
 .header-right { color: var(--gray); font-size: 10px; font-weight: 700; letter-spacing: .18em; }
 
 .order-confirmation-container {
@@ -37,14 +37,14 @@
 
 .order-confirmation-container h1 {
     margin: 0;
-    font-family: "Playfair Display", serif;
+    font-family: "DM Sans", sans-serif;
     font-size: clamp(42px, 6vw, 74px);
     font-weight: 500;
     line-height: .95;
     letter-spacing: -.04em;
 }
 
-.thank-you-msg { margin: 28px 0 8px; font-family: "Playfair Display", serif; font-size: 22px; font-weight: 500; }
+.thank-you-msg { margin: 28px 0 8px; font-family: "DM Sans", sans-serif; font-size: 22px; font-weight: 500; }
 .preparing-msg { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.6; }
 
 .order-number { margin: 42px 0 0; font-size: 11px; font-weight: 700; letter-spacing: .2em; }
@@ -89,7 +89,7 @@
     background: linear-gradient(145deg, #e8e3ee, #a096b0);
 }
 .order-item-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.order-item-info strong { font-family: "Playfair Display", serif; font-size: 19px; font-weight: 500; }
+.order-item-info strong { font-family: "DM Sans", sans-serif; font-size: 19px; font-weight: 500; }
 .order-item-category { color: var(--gray); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .order-item-qty { color: var(--gray); font-size: 11px; }
 .order-item-price { font-size: 14px; font-weight: 600; white-space: nowrap; }
@@ -105,7 +105,7 @@
     font-weight: 600;
     letter-spacing: .1em;
 }
-.totals-row.grand-total span:last-child { font-family: "Playfair Display", serif; font-size: 27px; font-weight: 500; letter-spacing: 0; }
+.totals-row.grand-total span:last-child { font-family: "DM Sans", sans-serif; font-size: 27px; font-weight: 500; letter-spacing: 0; }
 
 /* --- delivery: useful, but never the main event --- */
 .delivery-estimate, .shipping-address { margin-bottom: 28px; }
@@ -117,7 +117,7 @@
     letter-spacing: .14em;
     text-transform: uppercase;
 }
-.delivery-info .value { margin: 0; font-family: "Playfair Display", serif; font-size: 25px; font-weight: 500; }
+.delivery-info .value { margin: 0; font-family: "DM Sans", sans-serif; font-size: 25px; font-weight: 500; }
 .delivery-info .method { margin: 7px 0 0; color: var(--gray); font-size: 11px; }
 .address-details p { margin: 0 0 5px; font-size: 13px; line-height: 1.65; }
 
@@ -161,7 +161,7 @@
 
 /* --- footer --- */
 .footer { padding-top: 60px; padding-bottom: 40px; }
-.footer-logo { font-family: "Playfair Display", serif; font-size: 34px; line-height: 1; }
+.footer-logo { font-family: "DM Sans", sans-serif; font-size: 34px; line-height: 1; }
 .footer-nav { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 28px; font-size: 13px; }
 .footer-nav a { color: #999; transition: color .2s ease; }
 .footer-nav a:hover { color: white; }

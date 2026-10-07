@@ -1,5 +1,5 @@
 .checkout-header { height: 82px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(var(--gutter), (100% - var(--container)) / 2); border-bottom: 1px solid var(--line); background: var(--white); }
-.checkout-logo { font-family: "Playfair Display", serif; font-size: 34px; color: var(--black); line-height: 1; }
+.checkout-logo { font-family: "DM Sans", sans-serif; font-size: 34px; color: var(--black); line-height: 1; }
 .checkout-security { display: flex; align-items: center; gap: 8px; color: var(--gray); font-size: 11px; }
 .checkout-security span { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 50%; }
 .checkout-page { background: var(--white); }
@@ -10,7 +10,7 @@
 .section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
 .section-title > div { display: flex; align-items: center; gap: 18px; }
 .section-title > div > span { color: var(--gray); font-size: 10px; font-weight: 700; }
-.section-title h2 { margin: 0; font-family: "Playfair Display", serif; font-size: 30px; font-weight: 500; }
+.section-title h2 { margin: 0; font-family: "DM Sans", sans-serif; font-size: 30px; font-weight: 500; }
 .section-title a { color: var(--black); font-size: 11px; text-decoration: underline; text-underline-offset: 4px; }
 .checkout-section label { display: block; margin-bottom: 18px; color: var(--gray); font-size: 10px; }
 .checkout-section input, .checkout-section select { display: block; width: 100%; height: 52px; margin-top: 8px; padding: 0 14px; border: 1px solid var(--line); background: var(--white); color: var(--black); font-family: inherit; font-size: 12px; outline: none; transition: border-color .2s ease, box-shadow .2s ease; }
@@ -45,7 +45,7 @@
 .place-order-section a { color: var(--black); text-decoration: underline; }
 .checkout-summary { align-self: stretch; padding: 70px 0 100px 50px; border-left: 1px solid var(--line); background: var(--cream-dark); }
 .summary-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-.summary-heading h2 { margin: 0; font-family: "Playfair Display", serif; font-size: 30px; font-weight: 500; }
+.summary-heading h2 { margin: 0; font-family: "DM Sans", sans-serif; font-size: 30px; font-weight: 500; }
 .summary-heading a { color: var(--gray); font-size: 10px; text-decoration: underline; text-underline-offset: 4px; }
 .checkout-product { display: grid; grid-template-columns: 70px 1fr auto; align-items: center; gap: 15px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
 .checkout-product-image { position: relative; width: 70px; height: 80px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 5px; background: radial-gradient(circle at 50% 45%, #d9d3e0, #8f86a0 55%, #4a4457); }
@@ -59,7 +59,7 @@
 .summary-divider { height: 1px; margin: 25px 0; background: var(--line); }
 .checkout-total { display: flex; justify-content: space-between; align-items: center; }
 .checkout-total span { font-size: 12px; }
-.checkout-total strong { font-family: "Playfair Display", serif; font-size: 27px; font-weight: 500; }
+.checkout-total strong { font-family: "DM Sans", sans-serif; font-size: 27px; font-weight: 500; }
 .currency { margin-top: 5px; color: var(--gray); font-size: 9px; text-align: right; }
 .checkout-guarantee { margin-top: 55px; padding-top: 30px; border-top: 1px solid var(--line); }
 .checkout-guarantee > div { padding: 20px 0; border-bottom: 1px solid var(--line); }
@@ -81,7 +81,7 @@
     .checkout-summary { padding: 45px 0 65px; }
     .success-box { padding: 55px 25px; }
 }
-.success-box h2 { margin: 0 0 15px; font-family: "Playfair Display", serif; font-size: 55px; font-weight: 500; }
+.success-box h2 { margin: 0 0 15px; font-family: "DM Sans", sans-serif; font-size: 55px; font-weight: 500; }
 .success-box > span { display: block; max-width: 300px; margin: 0 auto 25px; color: var(--gray); font-size: 12px; line-height: 1.7; }
 .success-box > strong { display: block; margin-bottom: 30px; font-size: 11px; }
 .success-box > a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 25px; background: var(--black); color: white; font-size: 11px; }

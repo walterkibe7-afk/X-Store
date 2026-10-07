@@ -4,18 +4,18 @@ body { font-family: "DM Sans", sans-serif; background: var(--cream); color: var(
 a { color: inherit; }
 button { font: inherit; }
 .account-header { height: 80px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 max(var(--gutter), (100% - var(--container)) / 2); background: var(--cream); }
-.account-header .logo { font-family: "Playfair Display", serif; font-size: 38px; font-weight: 600; text-decoration: none; line-height: 1; }
+.account-header .logo { font-family: "DM Sans", sans-serif; font-size: 38px; font-weight: 600; text-decoration: none; line-height: 1; }
 .continue-shopping { font-size: 13px; text-decoration: underline; text-underline-offset: 4px; }
 .account-page { width: min(var(--container), 100% - (var(--gutter) * 2)); margin: 0 auto; padding: 90px 0; }
 .account-intro { margin-bottom: 55px; }
 .account-intro .eyebrow { display: block; font-size: 11px; font-weight: 700; letter-spacing: .16em; margin-bottom: 12px; color: var(--gray); }
-.account-intro h1 { font-family: "Playfair Display", serif; font-size: clamp(42px, 6vw, 68px); font-weight: 500; margin-bottom: 15px; letter-spacing: -.03em; }
+.account-intro h1 { font-family: "DM Sans", sans-serif; font-size: clamp(42px, 6vw, 68px); font-weight: 500; margin-bottom: 15px; letter-spacing: -.03em; }
 .account-intro p { color: var(--gray); font-size: 15px; }
 .account-grid { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .account-card { min-height: 220px; background: var(--white); padding: 30px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-decoration: none; transition: background .25s ease; display: block; }
 .account-card:hover { background: #eeebf1; }
 .card-number { font-size: 11px; color: var(--gray); }
-.account-card h2 { font-family: "Playfair Display", serif; font-size: 30px; font-weight: 500; margin: 45px 0 10px; }
+.account-card h2 { font-family: "DM Sans", sans-serif; font-size: 30px; font-weight: 500; margin: 45px 0 10px; }
 .account-card p { color: var(--gray); font-size: 13px; line-height: 1.6; max-width: 300px; }
 .logout-button { margin-top: 35px; border: 1px solid var(--black); background: transparent; padding: 14px 28px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s ease, color .2s ease; }
 .logout-button:hover { background: var(--black); color: white; }

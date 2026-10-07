@@ -1,6 +1,6 @@
 .shop-header { padding: 110px max(var(--gutter), (100% - var(--container)) / 2) 80px; display: flex; justify-content: center; text-align: center; }
 .shop-header > div { max-width: 850px; }
-.shop-header h1 { font-family: "Playfair Display", serif; font-size: clamp(65px, 9vw, 120px); line-height: .88; letter-spacing: -.05em; }
+.shop-header h1 { font-family: "DM Sans", sans-serif; font-size: clamp(65px, 9vw, 120px); line-height: .88; letter-spacing: -.05em; }
 .shop-header h1 em { font-style: italic; }
 .shop-intro { max-width: 500px; margin: 35px auto 0; color: var(--gray); font-size: 14px; line-height: 1.7; }
 .shop-categories { padding: 0 max(var(--gutter), (100% - var(--container)) / 2) 40px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
