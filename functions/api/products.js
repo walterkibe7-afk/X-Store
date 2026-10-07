@@ -185,6 +185,20 @@ export default {
             else if (path === "/api/payments/callback" && method === "POST") {
                 response = await handlePaymentCallback(request, env);
             }
+            // Daraja STK + C2B (public; Daraja signs nothing, strict matching only)
+            else if (path === "/api/payments/stk" && method === "POST") {
+                response = await handleStkPush(request, env);
+            } else if (path === "/api/payments/daraja/result" && method === "POST") {
+                response = await handleDarajaResult(request, env);
+            } else if (path === "/api/payments/daraja/timeout" && method === "POST") {
+                response = await handleDarajaResult(request, env);
+            } else if (path === "/api/payments/daraja/validate" && method === "POST") {
+                response = await handleDarajaValidate(request, env);
+            } else if (path === "/api/payments/daraja/confirm" && method === "POST") {
+                response = await handleDarajaConfirm(request, env);
+            } else if (path.match(/^\/api\/payments\/status\/[^/]+$/) && method === "GET") {
+                response = await handlePaymentStatus(request, env, path.split("/").pop());
+            }
             // Customers routes
             else if (path === "/api/customers" && method === "GET") {
                 response = await handleGetCustomers(request, env);
@@ -724,29 +738,36 @@ function jsonResponse(data, status = 200) {
 // ORDER CREATION (PUBLIC)
 // =========================
 
-async function handleCreateOrder(request, env) {
-    const data = await request.json();
-    
-    const { email, firstName, lastName, phone, address, city, postal, country, items, delivery, payment } = data;
-    
+function orderError(status, message) {
+    const err = new Error(message);
+    err.httpStatus = status;
+    return err;
+}
+
+// Shared order-creation core: validates, prices from D1, inserts the
+// pending order. Used by plain checkout AND the Daraja STK route so both
+// paths produce identical orders. Throws orderError on validation issues.
+async function createPendingOrder(env, data) {
+    const { email, firstName, lastName, phone, address, city, postal, country, items, delivery, payment, number } = data || {};
+
     if (!email || !firstName || !lastName || !address || !city || !postal || !country || !items || !items.length) {
-        return jsonResponse({ error: "Missing required fields" }, 400);
+        throw orderError(400, "Missing required fields");
     }
-    
+
     const deliveryMethod = delivery?.method || "Standard delivery";
     const shipping = deliveryMethod.toLowerCase().includes("express") ? 12 : 5;
-    
+
     // Look up products and compute subtotal from D1 prices
     let subtotal = 0;
     const orderItems = [];
-    
+
     for (const item of items) {
         const product = await env.DB.prepare("SELECT id, name, price, active FROM products WHERE id = ?").bind(item.id).first();
         if (!product) {
-            return jsonResponse({ error: `Product not found: ${item.id}` }, 400);
+            throw orderError(400, `Product not found: ${item.id}`);
         }
         if (product.active !== 1) {
-            return jsonResponse({ error: `Product not available: ${item.name}` }, 400);
+            throw orderError(400, `Product not available: ${item.name}`);
         }
         const quantity = Math.max(1, parseInt(item.quantity) || 1);
         const lineTotal = product.price * quantity;
@@ -758,17 +779,19 @@ async function handleCreateOrder(request, env) {
             price: product.price
         });
     }
-    
+
     const total = subtotal + shipping;
     const orderId = crypto.randomUUID();
-    const orderNumber = `ELLE${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
+    let orderNumber = (typeof number === "string" && /^ELLE[0-9A-Z]{8}$/.test(number.trim().toUpperCase()))
+        ? number.trim().toUpperCase()
+        : `ELLE${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date().toISOString();
     const payMethod = (payment && payment.method) || "card";
     const payReference = (payment && payment.reference) || null;
     if (payMethod === "paybill" && !payReference) {
-        return jsonResponse({ error: "M-Pesa transaction code is required for Paybill orders" }, 400);
+        throw orderError(400, "M-Pesa transaction code is required for Paybill orders");
     }
-    
+
     // Upsert customer by email
     let customer = await env.DB.prepare("SELECT id FROM customers WHERE email = ?").bind(email).first();
     if (!customer) {
@@ -779,37 +802,64 @@ async function handleCreateOrder(request, env) {
         `).bind(customerId, firstName, lastName, email, phone || null, address, city, country, now).run();
         customer = { id: customerId };
     }
-    
+
+    // Client-supplied order number (Paybill pre-generate flow): keep it when
+    // still unused, otherwise fall back to a fresh one.
+    try {
+        const clash = await env.DB.prepare("SELECT id FROM orders WHERE number = ?").bind(orderNumber).first();
+        if (clash) {
+            orderNumber = `ELLE${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+    } catch (e) {}
+
     // Insert order and order_items in a batch
     const batch = [];
     batch.push(env.DB.prepare(`
-        INSERT INTO orders (id, customer_id, customer_email, number, status, subtotal, shipping, total, 
+        INSERT INTO orders (id, customer_id, customer_email, number, status, subtotal, shipping, total,
             shipping_name, shipping_email, shipping_phone, shipping_address, shipping_city, shipping_country,
             payment_method, payment_reference, created_at, updated_at)
         VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(orderId, customer.id, email, orderNumber, subtotal, shipping, total, 
+    `).bind(orderId, customer.id, email, orderNumber, subtotal, shipping, total,
         `${firstName} ${lastName}`, email, phone || null, address, city, country,
         payMethod, payReference, now, now));
-    
+
     for (const item of orderItems) {
         batch.push(env.DB.prepare(`
             INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
             VALUES (?, ?, ?, ?, ?)
         `).bind(orderId, item.product_id, item.product_name, item.quantity, item.price));
     }
-    
+
     await env.DB.batch(batch);
-    
-    return jsonResponse({
-        order: {
-            id: orderId,
-            number: orderNumber,
-            subtotal,
-            shipping,
-            total,
-            items: orderItems.map(i => ({ ...i, lineTotal: i.price * i.quantity }))
-        }
-    }, 201);
+
+    return {
+        orderId, orderNumber, subtotal, shipping, total, orderItems,
+        customer: { id: customer.id, email, firstName, lastName, phone: phone || null }
+    };
+}
+
+async function handleCreateOrder(request, env) {
+    let data = null;
+    try {
+        data = await request.json();
+    } catch (e) {
+        return jsonResponse({ error: "Invalid JSON body" }, 400);
+    }
+    try {
+        const rec = await createPendingOrder(env, data);
+        return jsonResponse({
+            order: {
+                id: rec.orderId,
+                number: rec.orderNumber,
+                subtotal: rec.subtotal,
+                shipping: rec.shipping,
+                total: rec.total,
+                items: rec.orderItems.map(i => ({ ...i, lineTotal: i.price * i.quantity }))
+            }
+        }, 201);
+    } catch (e) {
+        return jsonResponse({ error: e.message || "Failed to create order" }, e.httpStatus || 500);
+    }
 }
 
 // =========================
@@ -866,11 +916,31 @@ async function handlePaymentCallback(request, env) {
         return jsonResponse({ error: "Missing account reference" }, 400);
     }
 
-    const order = await env.DB.prepare(
-        "SELECT * FROM orders WHERE UPPER(number) = ?"
-    ).bind(ref).first();
+    return confirmOrderPayment(env, { ref, txId, amount });
+}
+
+// Shared paid-flip used by the bank callback, Daraja STK results and C2B
+// confirmations. Match by STK checkout id first, else by order number.
+// Only ever pending -> paid; amount mismatches are held for manual review.
+async function confirmOrderPayment(env, match) {
+    const checkoutId = match && match.checkoutId ? String(match.checkoutId) : "";
+    const ref = match && match.ref ? String(match.ref).trim().toUpperCase() : "";
+    const txId = match && match.txId ? String(match.txId) : "";
+    const amount = match ? match.amount : null;
+
+    let order = null;
+    if (checkoutId) {
+        order = await env.DB.prepare(
+            "SELECT * FROM orders WHERE payment_reference = ?"
+        ).bind(checkoutId).first();
+    }
+    if (!order && ref) {
+        order = await env.DB.prepare(
+            "SELECT * FROM orders WHERE UPPER(number) = ?"
+        ).bind(ref).first();
+    }
     if (!order) {
-        return jsonResponse({ error: "Order not found for reference", reference: ref }, 404);
+        return jsonResponse({ error: "Order not found for reference", reference: ref || checkoutId }, 404);
     }
     if (order.status === "paid") {
         return jsonResponse({ ok: true, already: true, number: order.number });
@@ -881,7 +951,8 @@ async function handlePaymentCallback(request, env) {
 
     // Amount mismatch: record the receipt but keep the order pending for
     // manual review instead of marking the wrong amount paid.
-    if (amount !== null && Number.isFinite(amount) && Math.abs(amount - Number(order.total)) > 0.01) {
+    if (amount !== null && amount !== undefined && Number.isFinite(Number(amount)) &&
+        Math.abs(Number(amount) - Number(order.total)) > 0.01) {
         await env.DB.prepare(
             "UPDATE orders SET payment_reference = ?, updated_at = ? WHERE id = ?"
         ).bind(txId || order.payment_reference || null, new Date().toISOString(), order.id).run();
@@ -893,6 +964,221 @@ async function handlePaymentCallback(request, env) {
         "UPDATE orders SET status = 'paid', payment_reference = ?, paid_at = ?, updated_at = ? WHERE id = ?"
     ).bind(txId || order.payment_reference || null, now, now, order.id).run();
     return jsonResponse({ ok: true, number: order.number, paid_at: now });
+}
+
+// =========================
+// DARAJA (SAFARICOM) INTEGRATION
+// All secrets stay server-side. Sandbox by default; set DARAJA_BASE to
+// https://api.safaricom.co.ke at go-live (plus production secrets).
+// Callback URLs derive from the incoming request origin, so dev and prod
+// each register their own host with Safaricom.
+// =========================
+
+function darajaBase(env) {
+    return (env.DARAJA_BASE || "https://sandbox.safaricom.co.ke").replace(/\/+$/, "");
+}
+
+// Nairobi wall-clock in Safaricom's YYYYMMDDHHmmss format.
+function darajaTimestamp() {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Nairobi",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false
+    }).formatToParts(new Date());
+    const get = (t) => (parts.find((p) => p.type === t) || {}).value || "";
+    return get("year") + get("month") + get("day") + get("hour") + get("minute") + get("second");
+}
+
+function normalizeMsisdn(raw) {
+    const digits = String(raw || "").replace(/\D/g, "");
+    let msisdn = "";
+    if (/^0[17]\d{8}$/.test(digits)) msisdn = "254" + digits.slice(1);
+    else if (/^254[17]\d{8}$/.test(digits)) msisdn = digits;
+    return /^254[17]\d{8}$/.test(msisdn) ? msisdn : null;
+}
+
+// OAuth token, cached in KV (tokens live ~1 hour).
+async function getDarajaToken(env) {
+    const key = env.DARAJA_CONSUMER_KEY || "";
+    const secret = env.DARAJA_CONSUMER_SECRET || "";
+    if (!key || !secret) {
+        throw orderError(503, "M-Pesa payments are not configured");
+    }
+    try {
+        const cached = await env.SESSIONS.get("daraja:token", { type: "json" });
+        if (cached && cached.token && cached.exp > Date.now() + 60000) {
+            return cached.token;
+        }
+    } catch (e) {}
+    const creds = btoa(key + ":" + secret);
+    const res = await fetch(darajaBase(env) + "/oauth/v1/generate?grant_type=client_credentials", {
+        headers: { Authorization: "Basic " + creds }
+    });
+    if (!res.ok) {
+        throw orderError(502, "Could not reach M-Pesa. Try again or use Paybill.");
+    }
+    const data = await res.json();
+    if (!data.access_token) {
+        throw orderError(502, "Could not reach M-Pesa. Try again or use Paybill.");
+    }
+    const token = data.access_token;
+    try {
+        await env.SESSIONS.put("daraja:token",
+            JSON.stringify({ token, exp: Date.now() + 3500 * 1000 }),
+            { expirationTtl: 3500 });
+    } catch (e) {}
+    return token;
+}
+
+async function darajaStkPush(env, origin, { phone, amount, reference }) {
+    const shortcode = env.DARAJA_SHORTCODE || "";
+    const passkey = env.DARAJA_PASSKEY || "";
+    if (!shortcode || !passkey) {
+        throw orderError(503, "M-Pesa payments are not configured");
+    }
+    const token = await getDarajaToken(env);
+    const timestamp = darajaTimestamp();
+    const password = btoa(shortcode + passkey + timestamp);
+    const callbackURL = origin.replace(/\/+$/, "") + "/api/payments/daraja/result";
+    const res = await fetch(darajaBase(env) + "/mpesa/stkpush/v1/processrequest", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({
+            BusinessShortCode: shortcode,
+            Password: password,
+            Timestamp: timestamp,
+            TransactionType: "CustomerPayBillOnline",
+            Amount: Math.max(1, Math.round(Number(amount) || 0)),
+            PartyA: phone,
+            PartyB: shortcode,
+            PhoneNumber: phone,
+            CallBackURL: callbackURL,
+            AccountReference: reference,
+            TransactionDesc: "Elle order " + reference
+        })
+    });
+    let data = null;
+    try {
+        data = await res.json();
+    } catch (e) {
+        throw orderError(502, "Could not reach M-Pesa. Try again or use Paybill.");
+    }
+    if (!res.ok || String(data.ResponseCode) !== "0" || !data.CheckoutRequestID) {
+        throw orderError(502, "M-Pesa did not accept the request. Try again or use Paybill.");
+    }
+    return data;
+}
+
+// POST /api/payments/stk — creates the pending order, then pushes the STK
+// prompt. Body = same order fields as /api/orders, plus msisdn.
+async function handleStkPush(request, env) {
+    let data = null;
+    try {
+        data = await request.json();
+    } catch (e) {
+        return jsonResponse({ error: "Invalid JSON body" }, 400);
+    }
+    const phone = normalizeMsisdn((data && (data.msisdn || data.phone)) || "");
+    if (!phone) {
+        return jsonResponse({ error: "Enter a valid M-Pesa phone number (07… or 01…)" }, 400);
+    }
+    let rec = null;
+    try {
+        rec = await createPendingOrder(env, Object.assign({}, data, {
+            payment: { method: "stk", reference: "" }
+        }));
+    } catch (e) {
+        return jsonResponse({ error: e.message || "Failed to create order" }, e.httpStatus || 500);
+    }
+    const origin = new URL(request.url).origin;
+    let stk = null;
+    try {
+        stk = await darajaStkPush(env, origin, { phone, amount: rec.total, reference: rec.orderNumber });
+    } catch (e) {
+        return jsonResponse({ error: e.message || "Could not reach M-Pesa", number: rec.orderNumber }, e.httpStatus || 502);
+    }
+    try {
+        await env.DB.prepare("UPDATE orders SET payment_reference = ? WHERE id = ?")
+            .bind(stk.CheckoutRequestID, rec.orderId).run();
+    } catch (e) {}
+    return jsonResponse({
+        ok: true,
+        number: rec.orderNumber,
+        total: rec.total,
+        checkoutRequestId: stk.CheckoutRequestID
+    }, 201);
+}
+
+// Daraja STK result + timeout callbacks. Failures simply leave the order
+// pending so the customer can retry; only exact-amount successes flip paid.
+async function handleDarajaResult(request, env) {
+    let body = null;
+    try {
+        body = await request.json();
+    } catch (e) {
+        return jsonResponse({ ok: true });
+    }
+    const cb = body && body.Body && body.Body.stkCallback;
+    if (!cb) {
+        return jsonResponse({ ok: true });
+    }
+    if (Number(cb.ResultCode) !== 0) {
+        return jsonResponse({ ok: true, noted: cb.ResultDesc || "failed" });
+    }
+    const meta = {};
+    const items = (cb.CallbackMetadata && cb.CallbackMetadata.Item) || [];
+    items.forEach((entry) => {
+        if (entry && entry.Name) meta[entry.Name] = entry.Value;
+    });
+    return confirmOrderPayment(env, {
+        checkoutId: cb.CheckoutRequestID || "",
+        txId: meta.MpesaReceiptNumber ? String(meta.MpesaReceiptNumber) : "",
+        amount: meta.Amount !== undefined ? Number(meta.Amount) : null
+    });
+}
+
+// C2B validation: accept anything well-formed; matching happens on confirm.
+async function handleDarajaValidate(request, env) {
+    return jsonResponse({ ResultCode: 0, ResultDesc: "Accepted" });
+}
+
+// C2B confirmation: manual 542542 payments auto-confirm here.
+async function handleDarajaConfirm(request, env) {
+    let data = null;
+    try {
+        data = await request.json();
+    } catch (e) {
+        return jsonResponse({ ResultCode: 1, ResultDesc: "Rejected" });
+    }
+    const ref = String(data.BillRefNumber ?? data.reference ?? "").trim();
+    if (!ref) {
+        return jsonResponse({ ResultCode: 1, ResultDesc: "Rejected" });
+    }
+    const res = await confirmOrderPayment(env, {
+        ref,
+        txId: String(data.TransID ?? data.transaction ?? ""),
+        amount: data.TransAmount !== undefined ? Number(data.TransAmount) : null
+    });
+    // C2B expects ResultCode semantics; a held/missing match stays pending
+    // for review, which C2B treats as completion of the callback either way.
+    return jsonResponse({ ResultCode: 0, ResultDesc: "Accepted" });
+}
+
+// Public order-status peek for the checkout waiting room: number + status
+// only, so nothing sensitive leaks.
+async function handlePaymentStatus(request, env, number) {
+    const ref = String(number || "").trim().toUpperCase();
+    if (!/^ELLE[0-9A-Z]{8}$/.test(ref)) {
+        return jsonResponse({ error: "Unknown order" }, 404);
+    }
+    const order = await env.DB.prepare(
+        "SELECT number, status, total FROM orders WHERE number = ?"
+    ).bind(ref).first();
+    if (!order) {
+        return jsonResponse({ error: "Unknown order" }, 404);
+    }
+    return jsonResponse({ number: order.number, status: order.status, total: order.total });
 }
 
 // =========================

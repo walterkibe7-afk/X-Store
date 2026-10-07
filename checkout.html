@@ -49,7 +49,7 @@
 </div>
 <div class="checkout-section">
 <div class="section-title"><div><span>04</span><h2>Payment</h2></div></div>
-<p class="payment-note">This is a front-end prototype. No payment is processed and no card details are stored.</p>
+<p class="payment-note">Card is a demo and processes nothing. Mobile money sends a real M-Pesa prompt; Paybill is completed manually in your M-Pesa menu.</p>
 <div class="payment-methods">
 <button type="button" class="payment-method active" data-method="card">Card</button>
 <button type="button" class="payment-method" data-method="mobile">Mobile money</button>
@@ -64,8 +64,8 @@
 <label>Name on card<input type="text" placeholder="Name on card"></label>
 </div>
 <div class="mobile-money-fields">
-<label>Mobile money number<input type="tel" placeholder="+254 7XX XXX XXX"></label>
-<p>You will receive a payment prompt on your phone.</p>
+<label>Mobile money number<input type="tel" id="mobileMoneyNumber" placeholder="07XX XXX XXX"></label>
+<p>You will receive an M-Pesa prompt on your phone. Enter your PIN to pay.</p>
 </div>
 <div class="paybill-fields">
 <p class="paybill-instructions">Pay to <strong>Business no. <span class="paybill-number">500500</span></strong>, account <strong class="paybill-account">your order number</strong>, then enter the M-Pesa transaction code below. We confirm payment before dispatch.</p>

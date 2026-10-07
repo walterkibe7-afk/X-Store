@@ -422,6 +422,138 @@ function isChecked(id) {
     return !!(el && el.checked);
 }
 
+// Inline status line for the M-Pesa prompt flow (separate from the red
+// error banner so "waiting" never reads as failure).
+function stkStatusEl() {
+    let el = document.getElementById("stkStatus");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "stkStatus";
+    el.className = "stk-status";
+    el.setAttribute("role", "status");
+    el.hidden = true;
+    const anchor = document.querySelector(".place-order-section");
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(el, anchor);
+    return el;
+}
+
+function showStkStatus(message) {
+    const el = stkStatusEl();
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+}
+
+function clearStkStatus() {
+    const el = document.getElementById("stkStatus");
+    if (!el) return;
+    el.textContent = "";
+    el.hidden = true;
+}
+
+function waitMs(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function setPlacing(placing) {
+    if (placeOrderButton) placeOrderButton.disabled = !!placing;
+}
+
+// M-Pesa prompt (STK) flow: create the pending order server-side, push the
+// PIN prompt, then poll until Safaricom confirms. Only a confirmed payment
+// clears the cart and leaves checkout.
+async function placeStkOrder(email, lines) {
+    const phoneEl = document.getElementById("mobileMoneyNumber");
+    const msisdn = (phoneEl && phoneEl.value ? phoneEl.value : fieldValue("phone")).trim();
+    if (msisdn.replace(/\D/g, "").length < 9) {
+        showCheckoutError("Enter your M-Pesa phone number so we can send the payment prompt.");
+        if (phoneEl && typeof phoneEl.focus === "function") phoneEl.focus();
+        return;
+    }
+
+    clearCheckoutError();
+    setPlacing(true);
+    showStkStatus("Sending a payment prompt to " + msisdn + ". Enter your M-Pesa PIN on your phone to complete payment.");
+
+    const delivery = selectedDelivery();
+    let res = null;
+    let data = null;
+    try {
+        res = await fetch("/api/payments/stk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                firstName: fieldValue("firstName"),
+                lastName: fieldValue("lastName"),
+                phone: fieldValue("phone"),
+                msisdn: msisdn,
+                address: fieldValue("address"),
+                apartment: fieldValue("apartment"),
+                city: fieldValue("city"),
+                postal: fieldValue("postal"),
+                country: fieldValue("country"),
+                items: lines.map(l => ({ id: l.id, quantity: l.quantity })),
+                delivery: { method: delivery.name }
+            })
+        });
+        try {
+            data = await res.json();
+        } catch (e) {
+            data = null;
+        }
+    } catch (e) {
+        data = null;
+    }
+
+    if (!res || !res.ok || !data || !data.ok || !data.number) {
+        setPlacing(false);
+        clearStkStatus();
+        showCheckoutError((data && data.error) || "We could not send the M-Pesa prompt. Try again or pay via M-Pesa Paybill instead.");
+        return;
+    }
+
+    showStkStatus("Prompt sent to " + msisdn + ". Enter your M-Pesa PIN now — this page will confirm automatically.");
+
+    let paid = false;
+    for (let attempt = 0; attempt < 40; attempt++) {
+        await waitMs(3000);
+        try {
+            const check = await fetch("/api/payments/status/" + encodeURIComponent(data.number));
+            if (check.ok) {
+                const state = await check.json();
+                if (state && state.status === "paid") {
+                    paid = true;
+                    break;
+                }
+            }
+        } catch (e) {}
+    }
+
+    if (!paid) {
+        setPlacing(false);
+        showStkStatus("We have not confirmed your payment yet (order " + data.number + "). If you paid, it will confirm shortly — otherwise retry, or complete it via M-Pesa Paybill with account " + data.number + ".");
+        return;
+    }
+
+    const order = buildOrder(email, lines);
+    order.number = data.number;
+    order.orderNumber = data.number;
+    order.id = data.number;
+    order.total = typeof data.total === "number" ? data.total : order.total;
+    order.payment = { method: "mobile", reference: data.checkoutRequestId || "", status: "paid" };
+    saveOrder(order);
+    saveAccountPreferences();
+
+    try { localStorage.removeItem("xCart"); } catch (e) {}
+    if (typeof CartStore !== "undefined" && CartStore) {
+        try { if (typeof CartStore.syncBadges === "function") CartStore.syncBadges(); } catch (e) {}
+    }
+    try { localStorage.removeItem("xCheckoutRedirect"); } catch (e) {}
+
+    window.location.href = "order-confirmation.html";
+}
+
 // Inline error banner (no reload): created once, reused for validation + empty cart.
 function checkoutErrorEl() {
     let el = document.getElementById("checkoutError");
@@ -503,6 +635,14 @@ if (placeOrderButton) {
         }
 
         const email = fieldValue("email");
+
+        // M-Pesa prompt goes through the STK flow (server-created order +
+        // PIN prompt + polling). Card and Paybill use the classic flow below.
+        if (selectedPaymentMethod() === "mobile") {
+            await placeStkOrder(email, lines);
+            return;
+        }
+
         const order = buildOrder(email, lines);
         order.payment = { method: payMethod, reference: payReference, status: payMethod === "card" ? "paid" : "pending" };
         

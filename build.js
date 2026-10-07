@@ -14,9 +14,9 @@ const exclude = [
     'wrangler.toml',
     'migrations',
     'functions',
+    'x-store/functions',
     '_tools',
     '_tests',
-    'assets',
     'X-store.rar',
     '.gitignore'
 ];
@@ -47,8 +47,15 @@ function copyRecursive(src, dest) {
 }
 
 console.log('Building to dist...');
-if (fs.existsSync(destDir)) {
-    fs.rmSync(destDir, { recursive: true });
+try {
+    // Fresh wipe when nothing holds dist open (e.g. CI). A running
+    // `wrangler dev` locks the folder on Windows, so fall back to an
+    // in-place overwrite which watchers tolerate.
+    if (fs.existsSync(destDir)) {
+        fs.rmSync(destDir, { recursive: true });
+    }
+} catch (e) {
+    console.log('dist is locked (dev server running?) - overwriting in place instead.');
 }
 copyRecursive(srcDir, destDir);
 console.log('Build complete!');

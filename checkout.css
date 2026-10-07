@@ -91,6 +91,9 @@
 .payment-method.active { border-color: var(--black); background: var(--black); color: white; }
 .mobile-money-fields, .paybill-fields { display: none; }
 .mobile-money-fields p { margin-top: 10px; color: var(--gray); font-size: 10px; }
+.stk-status { margin-top: 15px; padding: 14px 16px; background: var(--cream-dark); font-size: 12px; line-height: 1.6; }
+.stk-status[hidden] { display: none; }
+.place-order[disabled] { opacity: .5; cursor: wait; }
 .paybill-instructions { margin: 0 0 15px; color: var(--gray); font-size: 11px; line-height: 1.7; }
 .paybill-instructions strong { color: var(--black); }
 .paybill-fields label { display: block; font-size: 13px; font-weight: 600; }
