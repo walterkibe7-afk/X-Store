@@ -1,4 +1,4 @@
-.shop-header { padding: 110px max(var(--gutter), (100% - var(--container)) / 2) 80px; display: flex; justify-content: center; text-align: center; }
+.shop-header { padding: 48px max(var(--gutter), (100% - var(--container)) / 2) 28px; display: flex; justify-content: center; text-align: center; }
 .shop-header > div { max-width: 850px; }
 .shop-header h1 { font-family: "DM Sans", sans-serif; font-size: clamp(65px, 9vw, 120px); line-height: .88; letter-spacing: -.05em; }
 .shop-header h1 em { font-style: italic; }
@@ -7,7 +7,7 @@
 .shop-categories a { padding: 12px 19px; border: 1px solid var(--line); font-size: 11px; transition: background .2s ease, color .2s ease; }
 .shop-categories a:hover, .shop-categories .category-active { background: var(--black); color: white; border-color: var(--black); }
 .shop-products { padding: 30px max(var(--gutter), (100% - var(--container)) / 2) 120px; }
-.shop-toolbar { height: 70px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 35px; }
+.shop-toolbar { height: 70px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 24px; }
 .shop-toolbar > p { color: var(--gray); font-size: 11px; text-align: center; }
 .filter-button, .sort-button { height: 100%; border: 0; background: transparent; cursor: pointer; font-size: 11px; font-family: inherit; }
 .filter-button { justify-self: start; display: flex; align-items: center; gap: 10px; }
@@ -53,11 +53,11 @@
 .image-g { background: linear-gradient(135deg, #e6e2ea, #b3aabf); }
 .image-h { background: linear-gradient(135deg, #dcdde6, #a5b0bd); }
 @media (max-width: 1000px) {
-    .shop-header { padding-top: 80px; padding-bottom: 60px; }
+    .shop-header { padding-top: 48px; padding-bottom: 32px; }
     .shop-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
-    .shop-header { padding: 70px 20px 50px; }
+    .shop-header { padding: 40px 20px 28px; }
     .shop-header h1 { font-size: 68px; }
     .shop-intro { font-size: 13px; }
     .shop-categories { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent 100%); mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent 100%); }

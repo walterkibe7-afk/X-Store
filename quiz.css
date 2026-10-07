@@ -1,4 +1,4 @@
-.quiz-intro { min-height: 650px; display: flex; align-items: center; justify-content: center; padding: 100px var(--gutter); text-align: center; background: radial-gradient(circle at 50% 40%, #c7aa9b 0%, #8c6d5f 38%, #4d3d36 100%); color: white; }
+.quiz-intro { min-height: 650px; display: flex; align-items: center; justify-content: center; padding: 64px var(--gutter); text-align: center; background: radial-gradient(circle at 50% 40%, #c7aa9b 0%, #8c6d5f 38%, #4d3d36 100%); color: white; }
 .quiz-intro-content { max-width: 850px; }
 .quiz-intro-content > p:first-child { margin: 0 0 25px; font-size: 10px; font-weight: 700; letter-spacing: .2em; color: rgba(255,255,255,.7); }
 .quiz-intro h1 { margin: 0; font-family: "DM Sans", sans-serif; font-size: clamp(65px, 9vw, 120px); font-weight: 500; line-height: .9; letter-spacing: -.055em; }

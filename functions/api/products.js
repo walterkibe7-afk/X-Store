@@ -3,6 +3,119 @@
  * Main entry point for Cloudflare Worker
  */
 
+const ITERATIONS = 100000;
+const KEY_LENGTH = 32;
+const SALT_LENGTH = 16;
+const ALGORITHM = "PBKDF2";
+const HASH_ALGORITHM = "SHA-256";
+
+async function hashPassword(password) {
+    const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        { name: ALGORITHM },
+        false,
+        ["deriveBits"]
+    );
+    const hashBuffer = await crypto.subtle.deriveBits(
+        {
+            name: ALGORITHM,
+            salt,
+            iterations: ITERATIONS,
+            hash: HASH_ALGORITHM
+        },
+        keyMaterial,
+        KEY_LENGTH * 8
+    );
+    const hash = new Uint8Array(hashBuffer);
+    const saltB64 = btoa(String.fromCharCode(...salt));
+    const hashB64 = btoa(String.fromCharCode(...hash));
+    return `pbkdf2$${ITERATIONS}$${saltB64}$${hashB64}`;
+}
+
+async function verifyPassword(password, storedHash) {
+    if (!storedHash || !storedHash.startsWith("pbkdf2$")) {
+        return false;
+    }
+    const parts = storedHash.split("$");
+    if (parts.length !== 4) return false;
+    const [, iterationsStr, saltB64, hashB64] = parts;
+    const iterations = parseInt(iterationsStr, 10);
+    const salt = new Uint8Array(atob(saltB64).split("").map(c => c.charCodeAt(0)));
+    const expectedHash = new Uint8Array(atob(hashB64).split("").map(c => c.charCodeAt(0)));
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        { name: ALGORITHM },
+        false,
+        ["deriveBits"]
+    );
+    const hashBuffer = await crypto.subtle.deriveBits(
+        {
+            name: ALGORITHM,
+            salt,
+            iterations,
+            hash: HASH_ALGORITHM
+        },
+        keyMaterial,
+        KEY_LENGTH * 8
+    );
+    const computedHash = new Uint8Array(hashBuffer);
+    if (computedHash.length !== expectedHash.length) return false;
+    let diff = 0;
+    for (let i = 0; i < computedHash.length; i++) {
+        diff |= computedHash[i] ^ expectedHash[i];
+    }
+    return diff === 0;
+}
+
+function parseCookies(cookieHeader) {
+    const cookies = {};
+    if (!cookieHeader) return cookies;
+    cookieHeader.split(";").forEach(pair => {
+        const [key, value] = pair.trim().split("=");
+        if (key && value) cookies[key] = decodeURIComponent(value);
+    });
+    return cookies;
+}
+
+async function requireAdmin(request, env) {
+    const cookies = parseCookies(request.headers.get("Cookie"));
+    const sid = cookies.x_admin_session;
+    if (!sid) {
+        const authHeader = request.headers.get("Authorization");
+        if (authHeader?.startsWith("Bearer ")) {
+            return await validateSession(authHeader.slice(7), env);
+        }
+        return null;
+    }
+    return await validateSession(sid, env);
+}
+
+async function validateSession(sid, env) {
+    const session = await env.SESSIONS.get(`admin:${sid}`);
+    if (!session) return null;
+    try {
+        return JSON.parse(session);
+    } catch {
+        return null;
+    }
+}
+
+async function createAdminSession(admin, env) {
+    const sid = crypto.randomUUID();
+    const sessionData = JSON.stringify({ email: admin.email, name: admin.name });
+    await env.SESSIONS.put(`admin:${sid}`, sessionData, { expirationTtl: 43200 });
+    return sid;
+}
+
+async function deleteAdminSession(sid, env) {
+    await env.SESSIONS.delete(`admin:${sid}`);
+}
+
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -18,6 +131,24 @@ export default {
 
         if (method === "OPTIONS") {
             return new Response(null, { headers: corsHeaders });
+        }
+
+        // Auth middleware - check protected routes
+        const protectedPaths = [
+            { path: /^\/api\/products/, methods: ["POST", "PUT", "DELETE"] },
+            { path: /^\/api\/orders/, methods: ["GET", "PUT"] },
+            { path: /^\/api\/customers/, methods: ["GET"] },
+            { path: /^\/api\/settings/, methods: ["GET", "PUT"] },
+            { path: /^\/api\/admin\/me/, methods: ["GET"] },
+            { path: /^\/api\/admin\/stats/, methods: ["GET"] },
+        ];
+
+        const isProtected = protectedPaths.some(p => p.path.test(path) && p.methods.includes(method));
+        if (isProtected) {
+            const admin = await requireAdmin(request, env);
+            if (!admin) {
+                return jsonResponse({ error: "Unauthorized" }, 401);
+            }
         }
 
         try {
@@ -41,6 +172,8 @@ export default {
             // Orders routes
             else if (path === "/api/orders" && method === "GET") {
                 response = await handleGetOrders(request, env);
+            } else if (path === "/api/orders" && method === "POST") {
+                response = await handleCreateOrder(request, env);
             } else if (path.match(/^\/api\/orders\/[^/]+$/) && method === "GET") {
                 const id = path.split("/").pop();
                 response = await handleGetOrder(id, env);
@@ -51,15 +184,42 @@ export default {
             // Customers routes
             else if (path === "/api/customers" && method === "GET") {
                 response = await handleGetCustomers(request, env);
+            } else if (path === "/api/customers" && method === "POST") {
+                response = await handleCreateCustomer(request, env);
             } else if (path.match(/^\/api\/customers\/[^/]+$/) && method === "GET") {
                 const id = path.split("/").pop();
                 response = await handleGetCustomer(id, env);
+            } else if (path.match(/^\/api\/customers\/[^/]+$/) && method === "PUT") {
+                const id = path.split("/").pop();
+                response = await handleUpdateCustomer(id, request, env);
             }
             // Settings routes
             else if (path === "/api/settings" && method === "GET") {
                 response = await handleGetSettings(env);
             } else if (path === "/api/settings" && method === "PUT") {
                 response = await handleUpdateSettings(request, env);
+            }
+            // Admin auth routes
+            else if (path === "/api/admin/login" && method === "POST") {
+                response = await handleAdminLogin(request, env);
+            } else if (path === "/api/admin/logout" && method === "POST") {
+                response = await handleAdminLogout(request, env);
+            } else if (path === "/api/admin/me" && method === "GET") {
+                response = await handleAdminMe(request, env);
+            } else if (path === "/api/admin/stats" && method === "GET") {
+                response = await handleAdminStats(request, env);
+            }
+            // Customer auth routes (public)
+            else if (path === "/api/auth/signup" && method === "POST") {
+                response = await handleCustomerSignup(request, env);
+            } else if (path === "/api/auth/login" && method === "POST") {
+                response = await handleCustomerLogin(request, env);
+            } else if (path === "/api/auth/logout" && method === "POST") {
+                response = await handleCustomerLogout(request, env);
+            } else if (path === "/api/auth/me" && method === "GET") {
+                response = await handleCustomerMe(request, env);
+            } else if (path === "/api/my-orders" && method === "GET") {
+                response = await handleMyOrders(request, env);
             }
             // Health check
             else if (path === "/api/health" && method === "GET") {
@@ -100,7 +260,8 @@ async function handleGetProducts(request, env) {
     const category = url.searchParams.get("category");
     const active = url.searchParams.get("active");
     const featured = url.searchParams.get("featured");
-    const limit = parseInt(url.searchParams.get("limit") || "100");
+    const search = url.searchParams.get("search");
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 100);
     const offset = parseInt(url.searchParams.get("offset") || "0");
 
     let query = "SELECT * FROM products WHERE 1=1";
@@ -110,13 +271,18 @@ async function handleGetProducts(request, env) {
         query += " AND category = ?";
         params.push(category);
     }
-    if (active !== null) {
+    if (active !== null && active !== "") {
         query += " AND active = ?";
         params.push(active === "true" ? 1 : 0);
     }
-    if (featured !== null) {
+    if (featured !== null && featured !== "") {
         query += " AND featured = ?";
         params.push(featured === "true" ? 1 : 0);
+    }
+    if (search) {
+        query += " AND (name LIKE ? OR description LIKE ?)";
+        const term = `%${search}%`;
+        params.push(term, term);
     }
 
     query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
@@ -453,4 +619,367 @@ async function handleUpdateSettings(request, env) {
     return new Response(JSON.stringify({ settings, updated: updates }), {
         headers: { "Content-Type": "application/json" }
     });
+}
+
+// =========================
+// ADMIN AUTH HANDLERS
+// =========================
+
+async function handleAdminLogin(request, env) {
+    const { email, password } = await request.json();
+    if (!email || !password) {
+        return jsonResponse({ error: "Email and password required" }, 400);
+    }
+
+    const admin = await env.DB.prepare("SELECT * FROM admin_users WHERE email = ?").bind(email).first();
+    if (!admin) {
+        await incrementFailedLogin(request, env);
+        return jsonResponse({ error: "Invalid credentials" }, 401);
+    }
+
+    const valid = await verifyPassword(password, admin.password_hash);
+    if (!valid) {
+        await incrementFailedLogin(request, env);
+        return jsonResponse({ error: "Invalid credentials" }, 401);
+    }
+
+    await resetFailedLogin(request, env);
+    await env.DB.prepare("UPDATE admin_users SET last_login_at = ? WHERE id = ?")
+        .bind(new Date().toISOString(), admin.id).run();
+
+    const sid = await createAdminSession(admin, env);
+    const headers = { "Content-Type": "application/json" };
+    headers["Set-Cookie"] = `x_admin_session=${sid}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=43200`;
+
+    return new Response(JSON.stringify({ ok: true, admin: { email: admin.email, name: admin.name } }), { headers });
+}
+
+async function handleAdminLogout(request, env) {
+    const cookies = parseCookies(request.headers.get("Cookie"));
+    const sid = cookies.x_admin_session;
+    if (sid) {
+        await deleteAdminSession(sid, env);
+    }
+    const headers = { "Content-Type": "application/json" };
+    headers["Set-Cookie"] = "x_admin_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
+    return new Response(JSON.stringify({ ok: true }), { headers });
+}
+
+async function handleAdminMe(request, env) {
+    const admin = await requireAdmin(request, env);
+    if (!admin) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    return jsonResponse({ admin });
+}
+
+async function handleAdminStats(request, env) {
+    const admin = await requireAdmin(request, env);
+    if (!admin) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
+    const [productsRes, activeRes, ordersRes, customersRes, revenueRes] = await Promise.all([
+        env.DB.prepare("SELECT COUNT(*) as c FROM products").first(),
+        env.DB.prepare("SELECT COUNT(*) as c FROM products WHERE active = 1").first(),
+        env.DB.prepare("SELECT COUNT(*) as c FROM orders").first(),
+        env.DB.prepare("SELECT COUNT(*) as c FROM customers").first(),
+        env.DB.prepare("SELECT COALESCE(SUM(total), 0) as total FROM orders WHERE status != 'cancelled'").first()
+    ]);
+
+    return jsonResponse({
+        totalProducts: productsRes?.c ?? 0,
+        activeProducts: activeRes?.c ?? 0,
+        orders: ordersRes?.c ?? 0,
+        customers: customersRes?.c ?? 0,
+        revenue: revenueRes?.total ?? 0
+    });
+}
+
+async function incrementFailedLogin(request, env) {
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const key = `ratelimit:login:${ip}`;
+    const current = parseInt(await env.SESSIONS.get(key) || "0");
+    await env.SESSIONS.put(key, String(current + 1), { expirationTtl: 600 });
+}
+
+async function resetFailedLogin(request, env) {
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const key = `ratelimit:login:${ip}`;
+    await env.SESSIONS.delete(key);
+}
+
+function jsonResponse(data, status = 200) {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: { "Content-Type": "application/json" }
+    });
+}
+
+// =========================
+// ORDER CREATION (PUBLIC)
+// =========================
+
+async function handleCreateOrder(request, env) {
+    const data = await request.json();
+    
+    const { email, firstName, lastName, phone, address, city, postal, country, items, delivery, payment } = data;
+    
+    if (!email || !firstName || !lastName || !address || !city || !postal || !country || !items || !items.length) {
+        return jsonResponse({ error: "Missing required fields" }, 400);
+    }
+    
+    const deliveryMethod = delivery?.method || "Standard delivery";
+    const shipping = deliveryMethod.toLowerCase().includes("express") ? 12 : 5;
+    
+    // Look up products and compute subtotal from D1 prices
+    let subtotal = 0;
+    const orderItems = [];
+    
+    for (const item of items) {
+        const product = await env.DB.prepare("SELECT id, name, price, active FROM products WHERE id = ?").bind(item.id).first();
+        if (!product) {
+            return jsonResponse({ error: `Product not found: ${item.id}` }, 400);
+        }
+        if (product.active !== 1) {
+            return jsonResponse({ error: `Product not available: ${item.name}` }, 400);
+        }
+        const quantity = Math.max(1, parseInt(item.quantity) || 1);
+        const lineTotal = product.price * quantity;
+        subtotal += lineTotal;
+        orderItems.push({
+            product_id: product.id,
+            product_name: product.name,
+            quantity,
+            price: product.price
+        });
+    }
+    
+    const total = subtotal + shipping;
+    const orderId = crypto.randomUUID();
+    const orderNumber = `ELLE${Date.now().toString(36).toUpperCase().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
+    const now = new Date().toISOString();
+    const payMethod = (payment && payment.method) || "card";
+    const payReference = (payment && payment.reference) || null;
+    if (payMethod === "paybill" && !payReference) {
+        return jsonResponse({ error: "M-Pesa transaction code is required for Paybill orders" }, 400);
+    }
+    
+    // Upsert customer by email
+    let customer = await env.DB.prepare("SELECT id FROM customers WHERE email = ?").bind(email).first();
+    if (!customer) {
+        const customerId = crypto.randomUUID();
+        await env.DB.prepare(`
+            INSERT INTO customers (id, first_name, last_name, email, phone, address, city, country, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(customerId, firstName, lastName, email, phone || null, address, city, country, now).run();
+        customer = { id: customerId };
+    }
+    
+    // Insert order and order_items in a batch
+    const batch = [];
+    batch.push(env.DB.prepare(`
+        INSERT INTO orders (id, customer_id, customer_email, number, status, subtotal, shipping, total, 
+            shipping_name, shipping_email, shipping_phone, shipping_address, shipping_city, shipping_country,
+            payment_method, payment_reference, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(orderId, customer.id, email, orderNumber, subtotal, shipping, total, 
+        `${firstName} ${lastName}`, email, phone || null, address, city, country,
+        payMethod, payReference, now, now));
+    
+    for (const item of orderItems) {
+        batch.push(env.DB.prepare(`
+            INSERT INTO order_items (order_id, product_id, product_name, quantity, price)
+            VALUES (?, ?, ?, ?, ?)
+        `).bind(orderId, item.product_id, item.product_name, item.quantity, item.price));
+    }
+    
+    await env.DB.batch(batch);
+    
+    return jsonResponse({
+        order: {
+            id: orderId,
+            number: orderNumber,
+            subtotal,
+            shipping,
+            total,
+            items: orderItems.map(i => ({ ...i, lineTotal: i.price * i.quantity }))
+        }
+    }, 201);
+}
+
+// =========================
+// CUSTOMER CREATE/UPDATE (PROTECTED)
+// =========================
+
+async function handleCreateCustomer(request, env) {
+    const data = await request.json();
+    const { email, firstName, lastName, phone, address, city, country } = data;
+    
+    if (!email || !firstName || !lastName) {
+        return jsonResponse({ error: "Missing required fields" }, 400);
+    }
+    
+    const existing = await env.DB.prepare("SELECT id FROM customers WHERE email = ?").bind(email).first();
+    if (existing) {
+        return jsonResponse({ error: "Customer with this email already exists" }, 409);
+    }
+    
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    
+    await env.DB.prepare(`
+        INSERT INTO customers (id, first_name, last_name, email, phone, address, city, country, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(id, firstName, lastName, email, phone || null, address || null, city || null, country || null, now).run();
+    
+    const customer = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(id).first();
+    return jsonResponse({ customer }, 201);
+}
+
+async function handleUpdateCustomer(id, request, env) {
+    const data = await request.json();
+    
+    const customer = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(id).first();
+    if (!customer) {
+        return jsonResponse({ error: "Customer not found" }, 404);
+    }
+    
+    const allowedFields = ["first_name", "last_name", "email", "phone", "address", "city", "country"];
+    const updates = [];
+    const params = [];
+    
+    for (const field of allowedFields) {
+        if (data[field] !== undefined) {
+            updates.push(`${field} = ?`);
+            params.push(data[field]);
+        }
+    }
+    
+    if (updates.length === 0) {
+        return jsonResponse({ error: "No valid fields to update" }, 400);
+    }
+    
+    params.push(id);
+    await env.DB.prepare(`UPDATE customers SET ${updates.join(", ")} WHERE id = ?`).bind(...params).run();
+    
+    const updated = await env.DB.prepare("SELECT * FROM customers WHERE id = ?").bind(id).first();
+    return jsonResponse({ customer: updated });
+}
+
+// =========================
+// CUSTOMER AUTH HANDLERS
+// =========================
+
+async function createCustomerSession(customer, env) {
+    const sid = crypto.randomUUID();
+    const sessionData = JSON.stringify({ id: customer.id, email: customer.email });
+    await env.SESSIONS.put(`cust:${sid}`, sessionData, { expirationTtl: 2592000 });
+    return sid;
+}
+
+async function deleteCustomerSession(sid, env) {
+    await env.SESSIONS.delete(`cust:${sid}`);
+}
+
+async function validateCustomerSession(sid, env) {
+    const session = await env.SESSIONS.get(`cust:${sid}`);
+    if (!session) return null;
+    try { return JSON.parse(session); } catch { return null; }
+}
+
+async function requireCustomer(request, env) {
+    const cookies = parseCookies(request.headers.get("Cookie"));
+    const sid = cookies.x_cust_session;
+    if (!sid) return null;
+    return await validateCustomerSession(sid, env);
+}
+
+async function handleCustomerSignup(request, env) {
+    const { firstName, lastName, email, password } = await request.json();
+    if (!firstName || !lastName || !email || !password) {
+        return jsonResponse({ error: "All fields required" }, 400);
+    }
+    if (password.length < 8) {
+        return jsonResponse({ error: "Password must be at least 8 characters" }, 400);
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return jsonResponse({ error: "Invalid email format" }, 400);
+    }
+    
+    const existing = await env.DB.prepare("SELECT id FROM customers WHERE email = ?").bind(email).first();
+    if (existing) {
+        return jsonResponse({ error: "Email already registered" }, 409);
+    }
+    
+    const passwordHash = await hashPassword(password);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    
+    await env.DB.prepare(`
+        INSERT INTO customers (id, first_name, last_name, email, password_hash, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(id, firstName, lastName, email, passwordHash, now).run();
+    
+    const customer = { id, firstName, lastName, email };
+    const sid = await createCustomerSession(customer, env);
+    const headers = { "Content-Type": "application/json" };
+    headers["Set-Cookie"] = `x_cust_session=${sid}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`;
+    
+    return new Response(JSON.stringify({ ok: true, customer: { firstName, lastName, email } }), { headers });
+}
+
+async function handleCustomerLogin(request, env) {
+    const { email, password } = await request.json();
+    if (!email || !password) {
+        return jsonResponse({ error: "Email and password required" }, 400);
+    }
+    
+    const customer = await env.DB.prepare("SELECT * FROM customers WHERE email = ?").bind(email).first();
+    if (!customer || !customer.password_hash) {
+        return jsonResponse({ error: "Invalid credentials" }, 401);
+    }
+    
+    const valid = await verifyPassword(password, customer.password_hash);
+    if (!valid) {
+        return jsonResponse({ error: "Invalid credentials" }, 401);
+    }
+    
+    const sid = await createCustomerSession(customer, env);
+    const headers = { "Content-Type": "application/json" };
+    headers["Set-Cookie"] = `x_cust_session=${sid}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`;
+    
+    return new Response(JSON.stringify({ ok: true, customer: { firstName: customer.first_name, lastName: customer.last_name, email: customer.email } }), { headers });
+}
+
+async function handleCustomerLogout(request, env) {
+    const cookies = parseCookies(request.headers.get("Cookie"));
+    const sid = cookies.x_cust_session;
+    if (sid) await deleteCustomerSession(sid, env);
+    const headers = { "Content-Type": "application/json" };
+    headers["Set-Cookie"] = "x_cust_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
+    return new Response(JSON.stringify({ ok: true }), { headers });
+}
+
+async function handleCustomerMe(request, env) {
+    const customer = await requireCustomer(request, env);
+    if (!customer) return jsonResponse({ error: "Unauthorized" }, 401);
+    const full = await env.DB.prepare("SELECT id, first_name, last_name, email, phone, address, city, country FROM customers WHERE id = ?").bind(customer.id).first();
+    return jsonResponse({ customer: full });
+}
+
+async function handleMyOrders(request, env) {
+    const customer = await requireCustomer(request, env);
+    if (!customer) return jsonResponse({ error: "Unauthorized" }, 401);
+    
+    const { results } = await env.DB.prepare(`
+        SELECT o.*, COUNT(oi.id) as item_count
+        FROM orders o
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        WHERE o.customer_email = ?
+        GROUP BY o.id
+        ORDER BY o.created_at DESC
+    `).bind(customer.email).all();
+    
+    return jsonResponse({ orders: results });
 }

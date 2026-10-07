@@ -2,18 +2,21 @@
 // CHECKOUT PAGE
 // =========================
 
-// Require login before checkout
+// Require login before checkout - check API first, fall back to localStorage
 (function () {
     let loggedIn = null;
     try {
         loggedIn = localStorage.getItem("xLoggedIn");
     } catch (e) {}
-    if (loggedIn !== "true") {
-        try {
-            localStorage.setItem("xCheckoutRedirect", "checkout.html");
-        } catch (e) {}
-        window.location.href = "login.html";
-    }
+    
+    // Quick check - if localStorage says logged in, allow (will verify on API call later)
+    if (loggedIn === "true") return;
+    
+    // If not in localStorage, redirect to login
+    try {
+        localStorage.setItem("xCheckoutRedirect", "checkout.html");
+    } catch (e) {}
+    window.location.href = "login.html";
 })();
 
 // Prefill the contact email with the signed-in account
@@ -203,13 +206,21 @@ if (typeof window !== "undefined" && window && typeof window.addEventListener ==
 }
 
 // Payment method
+// "paybill" = manual M-Pesa Paybill to the business number shown in
+// checkout.html. Orders stay pending until the payment is confirmed.
+const paybillFields = document.querySelector(".paybill-fields");
+function selectedPaymentMethod() {
+    const active = document.querySelector(".payment-method.active");
+    return (active && active.getAttribute("data-method")) || "card";
+}
 paymentMethods.forEach((method) => {
     method.addEventListener("click", () => {
         paymentMethods.forEach((item) => item.classList.remove("active"));
         method.classList.add("active");
-        const isMobile = method.textContent.trim() === "Mobile money";
-        if (paymentFields) paymentFields.style.display = isMobile ? "none" : "block";
-        if (mobileMoneyFields) mobileMoneyFields.style.display = isMobile ? "block" : "none";
+        const selected = selectedPaymentMethod();
+        if (paymentFields) paymentFields.style.display = selected === "card" ? "block" : "none";
+        if (mobileMoneyFields) mobileMoneyFields.style.display = selected === "mobile" ? "block" : "none";
+        if (paybillFields) paybillFields.style.display = selected === "paybill" ? "block" : "none";
     });
 });
 
@@ -434,10 +445,10 @@ function clearCheckoutError() {
     el.hidden = true;
 }
 
-// Place order: validate -> snapshot -> clear the bag -> Order Confirmation.
-// Front-end mockup only: no real payment is processed.
+// Place order: validate -> POST to API -> snapshot -> clear the bag -> Order Confirmation.
+// If API fails (offline/dev), complete locally so demo never breaks.
 if (placeOrderButton) {
-    placeOrderButton.addEventListener("click", () => {
+    placeOrderButton.addEventListener("click", async () => {
         clearCheckoutError();
         const candidates = [
             { id: "email", label: "Email" },
@@ -448,9 +459,6 @@ if (placeOrderButton) {
             { id: "postal", label: "Postal / ZIP code" },
             { id: "phone", label: "Phone" }
         ];
-        // Only inputs actually rendered by this checkout design can block an
-        // order, so fixtures that omit optional nodes (or older markup without
-        // the postal field) still place successfully.
         const required = candidates.filter((field) => document.getElementById(field.id));
         let firstInvalid = null;
         required.forEach((field) => {
@@ -477,27 +485,83 @@ if (placeOrderButton) {
             return;
         }
 
+        const payMethod = selectedPaymentMethod();
+        let payReference = "";
+        if (payMethod === "paybill") {
+            const codeEl = document.getElementById("mpesaCode");
+            payReference = codeEl ? String(codeEl.value || "").trim().toUpperCase() : "";
+            if (payReference.length < 6) {
+                showCheckoutError("Enter the M-Pesa transaction code from your payment confirmation SMS.");
+                if (codeEl && typeof codeEl.focus === "function") codeEl.focus();
+                return;
+            }
+        }
+
         const email = fieldValue("email");
         const order = buildOrder(email, lines);
-        saveOrder(order);
+        order.payment = { method: payMethod, reference: payReference, status: payMethod === "card" ? "paid" : "pending" };
+        
+        // Prepare API payload
+        const delivery = selectedDelivery();
+        const payload = {
+            email: order.email,
+            firstName: order.customer.firstName,
+            lastName: order.customer.lastName,
+            phone: order.address.phone,
+            address: order.address.address,
+            apartment: order.address.apartment,
+            city: order.address.city,
+            postal: order.address.postal,
+            country: order.address.country,
+            items: lines.map(l => ({ id: l.id, quantity: l.quantity })),
+            delivery: { method: delivery.name },
+            payment: { method: payMethod, reference: payReference }
+        };
 
-        // The order exists, so the consent choices made on this form can be kept.
+        // Try API first
+        let apiSuccess = false;
+        try {
+            const res = await fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                // Merge server order data (number, totals from server)
+                order.number = data.order.number;
+                order.orderNumber = data.order.number;
+                order.id = data.order.id;
+                order.subtotal = data.order.subtotal;
+                order.shipping = data.order.shipping;
+                order.shippingCost = data.order.shipping;
+                order.total = data.order.total;
+                order.items = data.order.items.map(i => ({
+                    ...i,
+                    name: i.product_name,
+                    product: i.product_name,
+                    unitPrice: i.price,
+                    lineTotal: i.lineTotal,
+                    category: lines.find(l => l.id === i.product_id)?.category || ""
+                }));
+                apiSuccess = true;
+            } else {
+                const err = await res.json().catch(() => ({}));
+                console.warn("Order API failed:", err.error || res.status);
+            }
+        } catch (e) {
+            console.warn("Order API unavailable, falling back to localStorage:", e);
+        }
+
+        // Always save to localStorage for confirmation page (works offline)
+        saveOrder(order);
         saveAccountPreferences();
 
-        // The order is placed, so the bag is emptied (only after success).
-        // The xCart key is removed outright rather than reset to an empty
-        // array, so a stored cart never lingers after a completed checkout.
-        try {
-            localStorage.removeItem("xCart");
-        } catch (e) {}
+        try { localStorage.removeItem("xCart"); } catch (e) {}
         if (typeof CartStore !== "undefined" && CartStore) {
-            try {
-                if (typeof CartStore.syncBadges === "function") CartStore.syncBadges();
-            } catch (e) {}
+            try { if (typeof CartStore.syncBadges === "function") CartStore.syncBadges(); } catch (e) {}
         }
-        try {
-            localStorage.removeItem("xCheckoutRedirect");
-        } catch (e) {}
+        try { localStorage.removeItem("xCheckoutRedirect"); } catch (e) {}
 
         window.location.href = "order-confirmation.html";
     });

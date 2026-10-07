@@ -189,11 +189,6 @@ button, input { font: inherit; }
     .search-result-name { font-size: 16px; }
     .search-result-category { font-size: 8px; letter-spacing: .1em; }
 }
-.trust-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); max-width: var(--container); margin-inline: auto; }
-.trust-strip > div { padding: 30px 32px; border-right: 1px solid var(--line); }
-.trust-strip > div:last-child { border-right: 0; }
-.trust-strip strong { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
-.trust-strip span { color: var(--gray); font-size: 11px; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 55px; }
 /* Two categories now, so the grid is two columns of the same height the old
    four-card block used to occupy. Proportions and the 14px gap are unchanged. */
@@ -421,9 +416,6 @@ html.is-expand .intro-slide { transition: none; }
     .menu-button { display: block; }
     .hero { grid-template-columns: 1fr; }
     .hero-content { min-height: 600px; padding: 100px var(--gutter) 48px; align-items: flex-start; }
-    .trust-strip { grid-template-columns: repeat(2, 1fr); }
-    .trust-strip > div:nth-child(2) { border-right: 0; }
-    .trust-strip > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
     .category-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 450px; }
     .category-large { grid-row: auto; }
     .product-grid { grid-template-columns: repeat(2, 1fr); row-gap: 50px; }
@@ -448,9 +440,6 @@ html.is-expand .intro-slide { transition: none; }
     .hero-description { font-size: 13px; }
     .hero-buttons { flex-direction: column; align-items: stretch; }
     .hero-buttons .button { width: 100%; }
-    .trust-strip { grid-template-columns: 1fr; }
-    .trust-strip > div { border-right: 0; border-bottom: 1px solid var(--line); }
-    .trust-strip > div:last-child { border-bottom: 0; }
     .section-heading { align-items: flex-start; gap: 25px; flex-direction: column; }
     h2 { font-size: 52px; }
     .category-grid { grid-template-columns: 1fr; grid-template-rows: repeat(2, 390px); }

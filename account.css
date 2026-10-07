@@ -6,7 +6,7 @@ button { font: inherit; }
 .account-header { height: 80px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 max(var(--gutter), (100% - var(--container)) / 2); background: var(--cream); }
 .account-header .logo { font-family: "DM Sans", sans-serif; font-size: 38px; font-weight: 600; text-decoration: none; line-height: 1; }
 .continue-shopping { font-size: 13px; text-decoration: underline; text-underline-offset: 4px; }
-.account-page { width: min(var(--container), 100% - (var(--gutter) * 2)); margin: 0 auto; padding: 90px 0; }
+.account-page { width: min(var(--container), 100% - (var(--gutter) * 2)); margin: 0 auto; padding: 48px 0; }
 .account-intro { margin-bottom: 55px; }
 .account-intro .eyebrow { display: block; font-size: 11px; font-weight: 700; letter-spacing: .16em; margin-bottom: 12px; color: var(--gray); }
 .account-intro h1 { font-family: "DM Sans", sans-serif; font-size: clamp(42px, 6vw, 68px); font-weight: 500; margin-bottom: 15px; letter-spacing: -.03em; }

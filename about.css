@@ -13,7 +13,7 @@
     margin-inline: auto;
 }
 .about-hero-content {
-    padding: clamp(60px, 7vw, 110px) clamp(24px, 5vw, 80px);
+    padding: clamp(40px, 5vw, 64px) clamp(24px, 5vw, 80px);
     display: flex;
     flex-direction: column;
     justify-content: center;

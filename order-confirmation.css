@@ -19,7 +19,7 @@
 .order-confirmation-container {
     width: min(780px, 100% - (var(--gutter) * 2));
     margin: 0 auto;
-    padding: 90px 0 110px;
+    padding: 48px 0 64px;
     text-align: center;
 }
 

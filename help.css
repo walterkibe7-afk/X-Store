@@ -6,7 +6,7 @@
 
 /* --- HERO --- */
 .help-hero {
-    padding: 110px max(var(--gutter), (100% - var(--container)) / 2) 80px;
+    padding: 48px max(var(--gutter), (100% - var(--container)) / 2) 36px;
     display: flex;
     justify-content: center;
     text-align: center;
@@ -100,7 +100,7 @@
 
 /* --- RESPONSIVE: same 1000px / 600px breakpoints as the rest of the site --- */
 @media (max-width: 1000px) {
-    .help-hero { padding-top: 80px; padding-bottom: 60px; }
+    .help-hero { padding-top: 48px; padding-bottom: 32px; }
     .help-panels { grid-template-columns: repeat(2, 1fr); gap: 40px 0; }
     .help-panel { padding-right: 30px; }
     .help-panel + .help-panel { padding-left: 30px; }
