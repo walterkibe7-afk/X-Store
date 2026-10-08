@@ -39,7 +39,7 @@
     height: 100%;
     min-height: 560px;
     background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(0,0,0,.08)),
-        url("https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1300&q=85");
+        linear-gradient(135deg, #e8e5ea 0%, #b9b0c4 55%, #8f86a0 100%);
     background-size: cover;
     background-position: center;
 }
@@ -99,7 +99,7 @@
 .experience-image-placeholder {
     min-height: 620px;
     background: linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.12)),
-        url("https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1300&q=85");
+        linear-gradient(135deg, #4d3d36 0%, #8c6d5f 55%, #c7aa9b 100%);
     background-size: cover;
     background-position: center;
 }

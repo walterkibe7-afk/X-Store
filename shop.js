@@ -55,20 +55,12 @@
 
     // Map API product to storefront format. Missing fields degrade to
     // blanks so one malformed row never breaks the whole grid.
+    // Artwork is a CSS gradient class derived from the product id, so the
+    // grid makes zero third-party image requests.
     function adaptProduct(p) {
         const src = p || {};
         const category = src.category || "";
         const subcategory = src.subcategory || "";
-        const imageMap = {
-            "https://via.placeholder.com/600x600": "image-a",
-            "https://via.placeholder.com/600x600": "image-b",
-            "https://via.placeholder.com/600x600": "image-c",
-            "https://via.placeholder.com/600x600": "image-d",
-            "https://via.placeholder.com/600x600": "image-e",
-            "https://via.placeholder.com/600x600": "image-f",
-            "https://via.placeholder.com/600x600": "image-g",
-            "https://via.placeholder.com/600x600": "image-h"
-        };
         const imageClasses = ["image-a", "image-b", "image-c", "image-d", "image-e", "image-f", "image-g", "image-h"];
         const id = String(src.id || "");
         const firstAlpha = id.replace(/[^a-z]/g, '').charCodeAt(0);

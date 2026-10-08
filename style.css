@@ -197,27 +197,22 @@ button, input { font: inherit; }
 .category-large { grid-row: auto; }
 .category-image { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform .7s cubic-bezier(.2,.7,.2,1); }
 .category-card:hover .category-image { transform: scale(1.04); }
-.category-toys { background-image: linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0)), url("https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1200&q=85"); }
-/* The two category cards keep the exact photo + gradient treatment the old
-   four cards used. The category identity is carried by the wash behind the
-   label and the card's baseline rule, so the photography stays untouched. */
-.category-intimate-image { background-image: linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0)), url("https://images.unsplash.com/photo-1615397349754-cfa2066a298e?auto=format&fit=crop&w=1200&q=85"); }
-.category-wellness-image { background-image: linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0)), url("https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1000&q=85"); }
+/* Category tiles carry identity through brand gradients (no photography):
+   lavender-gray deeps for Intimate, blue-gray deeps for Wellness. */
+.category-intimate-image { background-image: linear-gradient(to top, rgba(37,35,38,.72) 0%, rgba(37,35,38,.12) 55%, rgba(37,35,38,0) 75%), linear-gradient(135deg, #4a4457 0%, #8f86a0 45%, #d9d3e0 100%); }
+.category-wellness-image { background-image: linear-gradient(to top, rgba(37,41,43,.72) 0%, rgba(37,41,43,.12) 55%, rgba(37,41,43,0) 75%), linear-gradient(135deg, #25292b 0%, #718391 45%, #e3e9ee 100%); }
 .category-info { position: absolute; left: 28px; right: 28px; bottom: 25px; color: white; }
 /* A soft category wash behind the card copy: the identity reads without
    tinting the photograph itself. */
 .category-info::before { content: ""; position: absolute; left: -28px; right: -28px; top: -14px; bottom: -25px; z-index: -1; opacity: .5; }
 .cat-intimate .category-info::before { background: linear-gradient(to top, var(--cat-intimate), rgba(232,229,234,0)); }
 .cat-wellness .category-info::before { background: linear-gradient(to top, var(--cat-wellness), rgba(227,233,238,0)); }
-.category-wellness { background-image: linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0)), url("https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1000&q=85"); }
-.category-body { background-image: linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0)), url("https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1000&q=85"); }
-.category-gifts { background-image: linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0)), url("https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=1000&q=85"); }
 .category-info { position: absolute; left: 28px; right: 28px; bottom: 25px; color: white; }
 .category-info span { font-size: 10px; opacity: .7; }
 .category-info h3 { font-family: "DM Sans", sans-serif; font-size: 31px; margin-top: 6px; }
 .category-info p { font-size: 11px; margin-top: 4px; opacity: .8; }
 .quiz-section { min-height: 680px; display: grid; grid-template-columns: 1fr 1fr; background: #dcd6de; max-width: var(--container); margin-inline: auto; }
-.quiz-image { background: linear-gradient(rgba(0,0,0,.05), rgba(0,0,0,.15)), url("https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1300&q=85"); background-size: cover; background-position: center; }
+.quiz-image { background: linear-gradient(135deg, #4d3d36 0%, #8c6d5f 55%, #c7aa9b 100%); }
 .quiz-content { padding: clamp(50px, 7vw, 96px); display: flex; flex-direction: column; justify-content: center; }
 .quiz-content h2 { max-width: 600px; }
 .quiz-content > p:not(.eyebrow) { max-width: 440px; color: var(--gray); font-size: 14px; line-height: 1.8; margin-top: 30px; }
@@ -367,6 +362,8 @@ html.is-slot .intro-slot { width: 1.7em; }
     transition: opacity .35s ease;
 }
 .intro-slide.is-active { opacity: 1; transform: scale(1); transition: opacity .35s ease, transform 1.2s ease; }
+.intro-crop-left { object-position: 15% center; }
+.intro-crop-right { object-position: 85% center; }
 html.is-expand .intro-slot {
     position: fixed;
     left: 50%;
@@ -389,7 +386,7 @@ html.is-expand .intro-slide { transition: none; }
 .self-care-content { padding: clamp(50px, 7vw, 96px); display: flex; flex-direction: column; justify-content: center; }
 .self-care-content h2 { max-width: 600px; }
 .self-care-content > p:not(.eyebrow) { max-width: 430px; color: var(--gray); line-height: 1.8; font-size: 14px; margin: 30px 0; }
-.self-care-image { background: linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)), url("https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1300&q=85"); background-size: cover; background-position: center; }
+.self-care-image { background: linear-gradient(135deg, #dfdbe2 0%, #b9b0c4 45%, #8f86a0 100%); }
 .newsletter { padding: 120px max(var(--gutter), (100% - var(--container)) / 2); background: var(--black); color: white; text-align: center; }
 .newsletter-inner { max-width: 650px; margin: auto; }
 .newsletter h2 { font-size: clamp(50px, 6vw, 82px); }
