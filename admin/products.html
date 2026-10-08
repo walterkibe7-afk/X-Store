@@ -19,7 +19,10 @@ async function init() {
   await reload();
 }
 async function reload() {
-  const data = await Admin.apiFetch('/api/products?limit=100');
+  // Cache-busting + no-store is handled inside Admin.apiFetch; the extra
+  // timestamp here guarantees a fresh read after a price save even if the
+  // browser tries to reuse the /api/products?limit=100 entry.
+  const data = await Admin.apiFetch('/api/products?limit=100&_=' + Date.now());
   rows = (data && data.products) ? data.products : [];
   render(document.querySelector('.chip.active') ? document.querySelector('.chip.active').textContent : 'All');
 }

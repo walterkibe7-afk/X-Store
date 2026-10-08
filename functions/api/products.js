@@ -229,6 +229,18 @@ export default {
             // Products routes
             if (path === "/api/products" && method === "GET") {
                 response = await handleGetProducts(request, env);
+                // Admin dashboard must always see fresh prices: never let a
+                // logged-in admin read sit in any cache. Public storefront can
+                // still use the short 60s CDN cache.
+                const authed = await requireAdmin(request, env);
+                if (authed) {
+                    response.headers.set("Cache-Control", "no-store");
+                    response.headers.delete("CDN-Cache-Control");
+                } else {
+                    response.headers.set("Cache-Control", "public, max-age=60");
+                    response.headers.set("CDN-Cache-Control", "public, max-age=60");
+                    response.headers.set("Vary", "Accept-Encoding");
+                }
             } else if (path.match(/^\/api\/products\/[^/]+$/) && method === "GET") {
                 const id = path.split("/").pop();
                 response = await handleGetProduct(id, env);
@@ -458,7 +470,7 @@ async function handleGetProduct(id, env) {
     }
 
     return new Response(JSON.stringify({ product }), {
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
     });
 }
 
@@ -577,7 +589,7 @@ async function handleUpdateProduct(id, request, env) {
     const updated = await env.DB.prepare("SELECT * FROM products WHERE id = ?").bind(id).first();
 
     return new Response(JSON.stringify({ product: updated }), {
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
     });
 }
 

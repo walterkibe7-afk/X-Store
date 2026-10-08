@@ -23,8 +23,9 @@ async function init() {
   Admin.mount('products', title, isEdit ? 'Update product details and catalogue status.' : 'Add a new product to your catalogue.', '<button class="btn btn-primary" id="saveTop">Save Changes</button>', body);
   const fillSub = () => { const c=document.getElementById('f-cat').value; document.getElementById('f-sub').innerHTML = (Admin.TAXONOMY[c]||[]).map(s=>'<option>'+s+'</option>').join(''); };
   document.getElementById('f-cat').onchange = fillSub;
-  const money = v => (v === null || v === undefined || v === '') ? '' : ('KSh ' + v);
-  const unmoney = v => { const n = parseFloat(String(v||'').replace(/[^0-9.]/g,'')); return isNaN(n) ? null : n; };
+  const money = v => (v === null || v === undefined || v === '') ? '' : String(v);
+  // Strip KSh prefix / commas / spaces but keep a single decimal point.
+  const unmoney = v => { const cleaned = String(v||'').replace(/[^0-9.]/g,''); if (!cleaned) return null; const n = parseFloat(cleaned); return isNaN(n) ? null : n; };
   if (isEdit) {
     const data = await Admin.apiFetch('/api/products/'+encodeURIComponent(id));
     const p = data && data.product;

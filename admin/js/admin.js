@@ -8,8 +8,14 @@ const Admin = (() => {
   ];
   
   async function apiFetch(path, options = {}) {
+    // Admin reads must never serve stale prices: bust the browser HTTP cache
+    // on every GET (e.g. /api/products?limit=100 after a price save).
+    let url = path;
+    if (!options.method || options.method.toUpperCase() === 'GET') {
+      url += (path.includes('?') ? '&' : '?') + '_=' + Date.now();
+    }
     try {
-      const res = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
+      const res = await fetch(url, { ...options, cache: 'no-store', headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
       if (res.status === 401 && !path.includes('/login')) {
         location.href = 'login.html';
         return null;
