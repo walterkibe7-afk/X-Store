@@ -29,7 +29,7 @@ async function paintDashboard(first) {
   +'<div class="card stat"><div><small>Customers</small><b>'+s.customers+'</b><p>All time</p></div><div class="stat-ic">@</div></div></div>'
   +'<div class="card"><div class="card-h"><h2>Recent Orders</h2><a class="link" href="orders.html">View all orders</a></div>'
   +'<div class="table-wrap"><table class="grid"><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody>'
-  + (recent.length ? recent.map(o => '<tr><td><strong>'+Admin.esc(o.number || o.id)+'</strong></td><td>'+Admin.esc(o.shipping_name || o.shipping_email || '—')+'</td><td>'+(o.item_count || 0)+'</td><td>$'+Number(o.total).toFixed(2)+'</td><td>'+Admin.pill(o.status)+'</td><td>'+new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })+'</td></tr>').join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-2)">No orders yet</td></tr>')
+  + (recent.length ? recent.map(o => '<tr><td><strong>'+Admin.esc(o.number || o.id)+'</strong></td><td>'+Admin.esc(o.shipping_name || o.shipping_email || '—')+'</td><td>'+(o.item_count || 0)+'</td><td>'+Admin.money(o.total)+'</td><td>'+Admin.pill(o.status)+'</td><td>'+new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })+'</td></tr>').join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-2)">No orders yet</td></tr>')
   +'</tbody></table></div></div>');
 }
 initDashboard();

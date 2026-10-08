@@ -11,8 +11,8 @@ async function init() {
   +'<div class="f-group"><label class="f-label">Product Name</label><input class="input" id="f-name" value=""></div>'
   +'<div class="f-row"><div class="f-group"><label class="f-label">Category</label><select class="select" id="f-cat"><option>Intimate</option><option>Wellness</option></select></div>'
   +'<div class="f-group"><label class="f-label">Subcategory</label><select class="select" id="f-sub"></select></div></div>'
-  +'<div class="f-row"><div class="f-group"><label class="f-label">Price</label><input class="input" id="f-price" value="" placeholder="$"></div>'
-  +'<div class="f-group"><label class="f-label">Compare-at Price</label><input class="input" id="f-compare" placeholder="$"></div></div>'
+  +'<div class="f-row"><div class="f-group"><label class="f-label">Price (KSh)</label><input class="input" id="f-price" value="" placeholder="KSh"></div>'
+  +'<div class="f-group"><label class="f-label">Compare-at Price (KSh)</label><input class="input" id="f-compare" placeholder="KSh"></div></div>'
   +'<div class="f-group"><label class="f-label">Badge</label><select class="select" id="f-badge"><option value="">No badge</option><option>BEST SELLER</option><option>NEW</option><option>SALE</option></select></div>'
   +'<div class="f-group"><label class="f-label">Description</label><textarea class="input" rows="4" id="f-desc"></textarea></div>'
   +'<div class="f-group"><label class="f-label">Status</label><select class="select" id="f-active"><option value="1">Active</option><option value="0">Inactive</option></select></div>'
@@ -23,7 +23,7 @@ async function init() {
   Admin.mount('products', title, isEdit ? 'Update product details and catalogue status.' : 'Add a new product to your catalogue.', '<button class="btn btn-primary" id="saveTop">Save Changes</button>', body);
   const fillSub = () => { const c=document.getElementById('f-cat').value; document.getElementById('f-sub').innerHTML = (Admin.TAXONOMY[c]||[]).map(s=>'<option>'+s+'</option>').join(''); };
   document.getElementById('f-cat').onchange = fillSub;
-  const money = v => (v === null || v === undefined || v === '') ? '' : ('$' + v);
+  const money = v => (v === null || v === undefined || v === '') ? '' : ('KSh ' + v);
   const unmoney = v => { const n = parseFloat(String(v||'').replace(/[^0-9.]/g,'')); return isNaN(n) ? null : n; };
   if (isEdit) {
     const data = await Admin.apiFetch('/api/products/'+encodeURIComponent(id));

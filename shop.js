@@ -1,16 +1,17 @@
 // =========================
 // SHOP PAGE
-// The grid, the Filter drawer, the Sort menu and Load more are all driven from
-// the shared catalogue (products.js), so the toolbar controls really do change
-// what is on screen. ?category= still works, because the category chips and the
-// global navbar's Wellness / Gifts links point at real URLs.
+// Fetches products from API, then drives grid, Filter drawer, Sort menu, Load more.
 // =========================
 
 (function () {
+    // Whole-shilling KES formatting used across the storefront.
+    function formatKES(value) {
+        const n = Math.round(Number(value) || 0);
+        return "KSh " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     const grid = document.querySelector(".shop-grid");
     if (!grid) return;
-
-    const CATALOGUE = window.PRODUCTS || [];
 
     // How many cards a single "page" of the grid holds.
     const PAGE_SIZE = 4;
@@ -19,6 +20,7 @@
     const countEl = document.querySelector(".shop-toolbar > p");
     const emptyState = document.querySelector(".shop-empty-state");
     const navLinks = document.querySelectorAll(".nav-links a");
+    const shopTrigger = document.querySelector(".nav-dropdown-trigger");
 
     const filterButton = document.querySelector(".filter-button");
     const filterPanel = document.querySelector(".filter-panel");
@@ -31,13 +33,7 @@
     const loadMoreWrap = document.querySelector(".load-more");
     const loadMoreButton = loadMoreWrap ? loadMoreWrap.querySelector("button") : null;
 
-    // The categories the chips link to. An unknown slug falls back to
-    // "everything" rather than showing a broken, empty page.
-    // There are only two primary categories; subcategories are filtered from
-    // the drawer instead, under their own parent.
     const KNOWN_CATEGORIES = ["", "intimate", "wellness"];
-
-    // Which nav item should read as "current" for a given category.
     const NAV_LABEL_FOR_CATEGORY = { intimate: "Intimate", wellness: "Wellness" };
 
     const SORT_LABELS = {
@@ -57,7 +53,53 @@
         return categoryFromSearch(anchor.getAttribute("href") || "");
     }
 
-    // ---- state ----------------------------------------------------------------
+    // Map API product to storefront format. Missing fields degrade to
+    // blanks so one malformed row never breaks the whole grid.
+    function adaptProduct(p) {
+        const src = p || {};
+        const category = src.category || "";
+        const subcategory = src.subcategory || "";
+        const imageMap = {
+            "https://via.placeholder.com/600x600": "image-a",
+            "https://via.placeholder.com/600x600": "image-b",
+            "https://via.placeholder.com/600x600": "image-c",
+            "https://via.placeholder.com/600x600": "image-d",
+            "https://via.placeholder.com/600x600": "image-e",
+            "https://via.placeholder.com/600x600": "image-f",
+            "https://via.placeholder.com/600x600": "image-g",
+            "https://via.placeholder.com/600x600": "image-h"
+        };
+        const imageClasses = ["image-a", "image-b", "image-c", "image-d", "image-e", "image-f", "image-g", "image-h"];
+        const id = String(src.id || "");
+        const firstAlpha = id.replace(/[^a-z]/g, '').charCodeAt(0);
+        const idx = imageClasses.indexOf(isNaN(firstAlpha) ? -1 : firstAlpha % imageClasses.length);
+        const imageClass = imageClasses[Math.max(0, idx)];
+
+        return {
+            id: id,
+            name: src.name || "Untitled product",
+            category: category,
+            categorySlug: category.toLowerCase(),
+            subcategory: subcategory,
+            subcategorySlug: subcategory.toLowerCase().replace(/\s+/g, '-'),
+            price: Number(src.price) || 0,
+            oldPrice: src.compare_price,
+            badge: src.badge || "",
+            badgeClass: src.badge ? String(src.badge).toLowerCase().replace(/\s+/g, '-') : '',
+            rating: src.rating || 0,
+            reviews: src.review_count || 0,
+            featured: !!src.featured,
+            newest: false,
+            image: imageClass,
+            description: src.description || "",
+            details: src.details || "",
+            care: '',
+            shipping: ''
+        };
+    }
+
+    let CATALOGUE = [];
+    let loading = true;
 
     const state = {
         category: categoryFromSearch(window.location.search),
@@ -67,11 +109,8 @@
         shown: PAGE_SIZE
     };
 
-    // ---- filtering / sorting --------------------------------------------------
-
     function matchesCategory(product) {
         if (state.category && product.categorySlug !== state.category) return false;
-        // No chosen subcategory means "every product type inside this category".
         if (state.subcategories.length && state.subcategories.indexOf(product.subcategorySlug) === -1) return false;
         return true;
     }
@@ -79,9 +118,9 @@
     function matchesPrice(product) {
         if (!state.prices.length) return true;
         return state.prices.some((band) => {
-            if (band === "under-30") return product.price < 30;
-            if (band === "30-50") return product.price >= 30 && product.price <= 50;
-            if (band === "over-50") return product.price > 50;
+            if (band === "under-3000") return product.price < 3000;
+            if (band === "3000-6000") return product.price >= 3000 && product.price <= 6000;
+            if (band === "over-6000") return product.price > 6000;
             return false;
         });
     }
@@ -106,15 +145,13 @@
         return sortProducts(CATALOGUE.filter((product) => matchesCategory(product) && matchesPrice(product)));
     }
 
-    // ---- rendering ------------------------------------------------------------
-
     function escapeHTML(value) {
         return String(value === null || value === undefined ? "" : value).replace(/[&<>"']/g, (char) => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
+            "&": "&",
+            "<": "<",
+            ">": ">",
+            '"': '"',
+            "'": "'"
         }[char]));
     }
 
@@ -126,11 +163,9 @@
         const stars = new Array(product.rating + 1).join("&#9733;") + " <small>(" + product.reviews + ")</small>";
 
         const price = product.oldPrice
-            ? "<div><strong>$" + product.price + "</strong><del>$" + product.oldPrice + "</del></div>"
-            : "<strong>$" + product.price + "</strong>";
+            ? "<div><strong>" + formatKES(product.price) + "</strong><del>" + formatKES(product.oldPrice) + "</del></div>"
+            : "<strong>" + formatKES(product.price) + "</strong>";
 
-        // The data-* attributes let the shared quick-add (script.js) add the exact
-        // product without having to guess anything from the markup.
         return '<article class="shop-product cat-' + escapeHTML(product.categorySlug) + '"' +
             ' data-product-id="' + escapeHTML(product.id) + '"' +
             ' data-name="' + escapeHTML(product.name) + '"' +
@@ -151,12 +186,15 @@
     }
 
     function render() {
+        if (loading) {
+            grid.innerHTML = '<div class="loading">Loading products...</div>';
+            return;
+        }
         const matches = matchingProducts();
         const shown = matches.slice(0, state.shown);
 
         grid.innerHTML = shown.map(cardHTML).join("");
 
-        // The count reports everything that matches, not just the current page.
         if (countEl) {
             countEl.textContent = matches.length + (matches.length === 1 ? " product" : " products");
         }
@@ -164,23 +202,21 @@
         if (emptyState) emptyState.hidden = matches.length !== 0;
         if (loadMoreWrap) loadMoreWrap.hidden = matches.length === 0 || state.shown >= matches.length;
 
-        // 1. Select the matching chip.
         chips.forEach((chip) => {
             chip.classList.toggle("category-active", chipCategory(chip) === state.category);
         });
 
-        // 2. Keep the drawer's radio buttons honest after a chip click.
         syncCategoryInputs();
 
-        // 3. Move the navbar's active underline onto the category that is open.
         const navLabel = NAV_LABEL_FOR_CATEGORY[state.category];
         navLinks.forEach((link) => {
             if (navLabel) {
                 link.classList.toggle("active-nav", link.textContent.trim() === navLabel);
-            } else if (link.textContent.trim() === "Shop") {
-                link.classList.add("active-nav");
             }
         });
+        // The dropdown no longer has an "All Products" item, so the Shop
+        // trigger itself carries the active state on unfiltered shop views.
+        if (shopTrigger) shopTrigger.classList.toggle("active-nav", !navLabel);
     }
 
     function syncCategoryInputs() {
@@ -192,8 +228,6 @@
         });
     }
 
-    // Keep the address bar shareable without reloading the page. Only the
-    // primary category goes in the URL; subcategories are a drawer-level view.
     function updateUrl() {
         const url = "shop.html" + (state.category ? "?category=" + state.category : "");
         try {
@@ -202,8 +236,6 @@
             }
         } catch (e) {}
     }
-
-    // ---- the toolbar -----------------------------------------------------------
 
     function setOpen(panel, button, open) {
         if (panel) panel.hidden = !open;
@@ -220,12 +252,8 @@
         state.subcategories = [];
         state.prices = [];
         state.shown = PAGE_SIZE;
-        priceInputs.forEach((input) => {
-            input.checked = false;
-        });
-        subcategoryInputs.forEach((input) => {
-            input.checked = false;
-        });
+        priceInputs.forEach((input) => { input.checked = false; });
+        subcategoryInputs.forEach((input) => { input.checked = false; });
     }
 
     if (filterButton && filterPanel) {
@@ -268,7 +296,6 @@
         });
     }
 
-    // The empty state offers the same escape hatch.
     if (emptyState) {
         const emptyClear = emptyState.querySelector(".clear-filters");
         if (emptyClear) {
@@ -302,13 +329,10 @@
         });
     }
 
-    // Category chips filter in place instead of reloading the page.
     chips.forEach((chip) => {
         chip.addEventListener("click", (event) => {
             event.preventDefault();
             state.category = chipCategory(chip);
-            // A chip is a primary-category view, so it starts with no
-            // subcategory narrowing rather than keeping the drawer's last pick.
             state.subcategories = [];
             state.shown = PAGE_SIZE;
             render();
@@ -316,7 +340,6 @@
         });
     });
 
-    // Clicking anywhere else closes the drawer and the sort menu.
     document.addEventListener("click", (event) => {
         const target = event.target;
         if (!target || !target.closest) return;
@@ -328,5 +351,23 @@
         if (event.key === "Escape") closeMenus();
     });
 
-    render();
+    async function loadProducts() {
+        try {
+            const params = new URLSearchParams({ active: "true", limit: "100" });
+            const res = await fetch("/api/products?" + params.toString());
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : data.products;
+            if (!Array.isArray(list)) throw new Error("unexpected response shape");
+            CATALOGUE = list.map(adaptProduct);
+        } catch (e) {
+            console.error("Failed to load products:", e && e.message ? e.message : e);
+            CATALOGUE = [];
+        } finally {
+            loading = false;
+            render();
+        }
+    }
+
+    loadProducts();
 })();

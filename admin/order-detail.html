@@ -3,7 +3,7 @@ let orderId = new URLSearchParams(location.search).get('id') || '';
 let lastStatus = '';
 let lastPayRef = '';
 const STATUSES = ['Pending','Paid','Processing','Shipped','Delivered','Cancelled'];
-function money(n) { return '$' + Number(n || 0).toFixed(2); }
+function money(n) { return Admin.money(n); }
 function shortDate(iso) { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
 async function init() {
   const ok = await Admin.requireAuth();
@@ -32,7 +32,7 @@ async function load(first) {
   +'<div class="card"><div class="card-h"><h2>Order Items</h2><select class="select" style="width:auto" id="st">'
   + STATUSES.map(s=>'<option'+(s.toLowerCase()===String(o.status).toLowerCase()?' selected':'')+'>'+s+'</option>').join('')
   +'</select></div><div class="card-b">'
-  +(items.length ? items.map(i=>'<div class="order-item">'+Admin.thumb((i.product_name||'?')[0])+'<div style="flex:1"><strong>'+Admin.esc(i.product_name||'Product')+'</strong><div style="font-size:12px;color:var(--text-2)">Qty '+i.quantity+'</div></div><strong>$'+Number(i.price*i.quantity).toFixed(2)+'</strong></div>').join('') : '<p style="color:var(--text-2)">No items recorded.</p>')
+  +(items.length ? items.map(i=>'<div class="order-item">'+Admin.thumb((i.product_name||'?')[0])+'<div style="flex:1"><strong>'+Admin.esc(i.product_name||'Product')+'</strong><div style="font-size:12px;color:var(--text-2)">Qty '+i.quantity+'</div></div><strong>'+Admin.money(i.price*i.quantity)+'</strong></div>').join('') : '<p style="color:var(--text-2)">No items recorded.</p>')
   +'<div style="margin-top:12px"><div class="sum-row"><span>Subtotal</span><span>'+money(o.subtotal)+'</span></div><div class="sum-row"><span>Shipping</span><span>'+money(o.shipping)+'</span></div><div class="sum-row total"><span>Total</span><span>'+money(o.total)+'</span></div></div>'
   +'</div></div></div><div>'
   +'<div class="card"><div class="card-h"><h2>Payment</h2>'+Admin.pill(o.status||'pending')+'</div><div class="card-b" style="font-size:13px;color:var(--text-2)">'

@@ -87,6 +87,12 @@ function parsePrice(text) {
     return isNaN(n) ? 0 : n;
 }
 
+// Whole-shilling KES formatting used across the storefront.
+function formatKES(value) {
+    const n = Math.round(Number(value) || 0);
+    return "KSh " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 function cartSubtotal() {
     try {
         if (typeof CartStore !== "undefined" && CartStore && typeof CartStore.subtotal === "function") {
@@ -163,8 +169,8 @@ function renderSummary() {
             '<div class="checkout-product-image"><span>' + qty + '</span></div>' +
             '<div class="checkout-product-info"><strong>' + name + '</strong>' +
             (category ? '<span>' + category + '</span>' : '') +
-            '<span>$' + price + ' each &times; ' + qty + '</span></div>' +
-            '<b>$' + (price * qty) + '</b>' +
+            '<span>' + formatKES(price) + ' each &times; ' + qty + '</span></div>' +
+            '<b>' + formatKES(price * qty) + '</b>' +
             '</div>';
         if (index === 0 && first) {
             first.outerHTML = html;
@@ -184,10 +190,10 @@ function renderSummary() {
 function updateTotal() {
     renderSummary();
     const selected = document.querySelector(".delivery-option.selected b");
-    const shipping = selected ? parsePrice(selected.textContent) : 5;
-    if (shippingEl) shippingEl.textContent = "$" + shipping;
-    if (subtotalEl && subtotalEl !== shippingEl) subtotalEl.textContent = "$" + cartSubtotal();
-    if (totalEl) totalEl.textContent = "$" + (cartSubtotal() + shipping);
+    const shipping = selected ? parsePrice(selected.textContent) : 650;
+    if (shippingEl) shippingEl.textContent = formatKES(shipping);
+    if (subtotalEl && subtotalEl !== shippingEl) subtotalEl.textContent = formatKES(cartSubtotal());
+    if (totalEl) totalEl.textContent = formatKES(cartSubtotal() + shipping);
 }
 
 // Delivery method
@@ -313,14 +319,14 @@ function selectedDelivery() {
             if (options && options.length) option = options[0];
         } catch (e) {}
     }
-    if (!option) return { name: "Standard delivery", window: "3-7 business days", cost: 5 };
+    if (!option) return { name: "Standard delivery", window: "3-7 business days", cost: 650 };
     const nameEl = (option && typeof option.querySelector === "function") ? option.querySelector("strong") : null;
     const windowEl = (option && typeof option.querySelector === "function") ? option.querySelector("span") : null;
     const costEl = (option && typeof option.querySelector === "function") ? option.querySelector("b") : null;
     let cost = costEl ? parsePrice(costEl.textContent) : 0;
     if (!cost) {
         const text = (option && option.textContent) ? option.textContent : "";
-        cost = parsePrice(text) || 5;
+        cost = parsePrice(text) || 650;
     }
     return {
         name: (nameEl && nameEl.textContent) ? nameEl.textContent.trim() : "Standard delivery",

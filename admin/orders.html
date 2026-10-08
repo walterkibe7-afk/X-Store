@@ -63,7 +63,7 @@ function render(f){
   if (q) list = list.filter(r=>String(r.number||'').toLowerCase().includes(q)||String(r.shipping_name||'').toLowerCase().includes(q)||String(r.shipping_email||'').toLowerCase().includes(q));
   if(!list.length){ tb.innerHTML=''; eb.innerHTML='<div class="empty"><div class="empty-ic">#</div><h3>No orders yet</h3><p>Orders will appear here when customers purchase from your store.</p></div>'; return; }
   eb.innerHTML='';
-  tb.innerHTML=list.map(r=>'<tr data-oid="'+Admin.esc(r.id)+'"><td><a class="link" href="order-detail.html?id='+encodeURIComponent(r.id)+'"><strong>'+Admin.esc(r.number||r.id)+'</strong></a></td><td>'+Admin.esc(r.shipping_name||r.shipping_email||'—')+'</td><td>'+(r.item_count||0)+'</td><td>$'+Number(r.total||0).toFixed(2)+'</td><td>'+Admin.esc(payLabel(r))+'</td><td>'+Admin.pill(r.status||'pending')+'</td><td>'+shortDate(r.created_at)+'</td></tr>').join('');
+  tb.innerHTML=list.map(r=>'<tr data-oid="'+Admin.esc(r.id)+'"><td><a class="link" href="order-detail.html?id='+encodeURIComponent(r.id)+'"><strong>'+Admin.esc(r.number||r.id)+'</strong></a></td><td>'+Admin.esc(r.shipping_name||r.shipping_email||'—')+'</td><td>'+(r.item_count||0)+'</td><td>'+Admin.money(r.total)+'</td><td>'+Admin.esc(payLabel(r))+'</td><td>'+Admin.pill(r.status||'pending')+'</td><td>'+shortDate(r.created_at)+'</td></tr>').join('');
 }
 init();
 </script></body></html>

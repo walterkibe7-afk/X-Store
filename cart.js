@@ -4,8 +4,14 @@
 // replaced by an empty state and checkout is disabled.
 // =========================
 
-// Flat rate used by the summary; checkout uses the same $5 standard delivery.
-const SHIPPING_FLAT_RATE = 5;
+// Flat rate used by the summary; checkout uses the same KSh 650 standard delivery.
+const SHIPPING_FLAT_RATE = 650;
+
+// Whole-shilling KES formatting used across the storefront.
+function formatKES(value) {
+    const n = Math.round(Number(value) || 0);
+    return "KSh " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 const cartProductsEl = document.getElementById("cartProducts");
 const cartLinesEl = document.getElementById("cartLines");
@@ -56,9 +62,9 @@ function renderCart() {
     // Flat rate shown in the cart and again on checkout, so the two agree.
     const shipping = empty ? 0 : SHIPPING_FLAT_RATE;
 
-    if (subtotalElement) subtotalElement.textContent = "$" + subtotal;
-    if (shippingElement) shippingElement.textContent = "$" + shipping;
-    if (totalElement) totalElement.textContent = "$" + (subtotal + shipping);
+    if (subtotalElement) subtotalElement.textContent = formatKES(subtotal);
+    if (shippingElement) shippingElement.textContent = formatKES(shipping);
+    if (totalElement) totalElement.textContent = formatKES(subtotal + shipping);
 
     // The header counts UNITS: 1 x Silk Touch + 2 x After Dark Oil reads "3 ITEMS".
     if (itemCountElement) {
@@ -197,7 +203,7 @@ if (recommendButton) {
             {
                 id: "after-dark-oil",
                 name: "After Dark Oil",
-                price: 28,
+                price: 3650,
                 category: "Wellness", subcategory: "Body & Massage"
             },
             1

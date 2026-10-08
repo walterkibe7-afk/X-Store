@@ -82,6 +82,75 @@ function parseCookies(cookieHeader) {
     return cookies;
 }
 
+// =========================
+// ASSET RESPONSE CACHE + GZIP
+// =========================
+
+// Content types worth gzipping (text-ish only; images/videos stay as-is).
+const COMPRESSIBLE_TYPES = /^(text\/|application\/json|application\/javascript|application\/x-javascript|text\/css|text\/xml|application\/xml|application\/manifest\+json|image\/svg\+xml)/i;
+
+// Cache-Control per component type (the "Expires header" requirement):
+//   HTML pages      -> no-cache, so edits show up immediately
+//   CSS / JS / JSON -> 7 days
+//   images / fonts  -> 30 days
+//   everything else -> 1 day
+function assetCacheControl(contentType) {
+    if (!contentType) return "public, max-age=3600";
+    if (contentType.includes("text/html")) return "no-cache";
+    if (/(javascript|css|json)/.test(contentType)) return "public, max-age=604800";
+    if (/(image\/|font\/|woff|svg)/.test(contentType)) return "public, max-age=2592000";
+    return "public, max-age=86400";
+}
+
+// Serve a static asset with Cache-Control + gzip (when the client accepts it).
+async function serveAsset(request, env) {
+    const response = await env.ASSETS.fetch(request);
+    const headers = new Headers(response.headers);
+    const contentType = headers.get("Content-Type") || "";
+    headers.set("Cache-Control", assetCacheControl(contentType));
+    headers.set("Vary", "Accept-Encoding");
+
+    // Security headers for assets
+    const isProduction = request.url.startsWith("https://");
+    const securityHeaders = {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fonts.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    };
+    if (isProduction) {
+        securityHeaders["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+    }
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+        headers.set(key, value);
+    });
+
+    const acceptsGzip = (request.headers.get("Accept-Encoding") || "").toLowerCase().includes("gzip");
+    const compressible = COMPRESSIBLE_TYPES.test(contentType);
+    const hasBody = (response.status === 200 || response.status === 404);
+
+    if (acceptsGzip && compressible && hasBody && !headers.get("Content-Encoding")) {
+        const buf = await response.arrayBuffer();
+        if (buf.byteLength > 0) {
+            const stream = new Blob([buf]).stream().pipeThrough(new CompressionStream("gzip"));
+            headers.delete("Content-Length");
+            return new Response(stream, {
+                status: response.status,
+                statusText: response.statusText,
+                headers
+            });
+        }
+    }
+
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers
+    });
+}
+
 async function requireAdmin(request, env) {
     const cookies = parseCookies(request.headers.get("Cookie"));
     const sid = cookies.x_admin_session;
@@ -128,6 +197,20 @@ export default {
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, Authorization",
         };
+
+        // Security headers for all responses
+        const isProduction = request.url.startsWith("https://");
+        const securityHeaders = {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://fonts.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+        };
+        if (isProduction) {
+            securityHeaders["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+        }
 
         if (method === "OPTIONS") {
             return new Response(null, { headers: corsHeaders });
@@ -245,15 +328,79 @@ export default {
                     headers: { "Content-Type": "application/json", ...corsHeaders }
                 });
             }
+            // Unknown /api/* path -> JSON 404 (never HTML for API clients)
+            else if (path.startsWith("/api/")) {
+                response = new Response(JSON.stringify({ error: "Not found" }), {
+                    status: 404,
+                    headers: { "Content-Type": "application/json" }
+                });
+            }
+            // Static files served directly (robots.txt, llms.txt)
+            else if (path === "/robots.txt" && method === "GET") {
+                response = new Response(`User-agent: *
+Allow: /
+
+Sitemap: https://x-store-prod.walterkibe7.workers.dev/sitemap.xml
+`, {
+                    headers: { "Content-Type": "text/plain" }
+                });
+            }
+            else if (path === "/llms.txt" && method === "GET") {
+                response = new Response(`# Elle Store
+An intimate wellness store offering curated personal care products.
+
+## Products
+- Silk Touch - Premium intimate toy
+- After Dark Oil - Body & massage oil
+- Midnight Gummies - Nightly wellness gummies
+- Velvet Mini - Compact intimate toy
+- Slow Down Oil - Warm massage oil
+- Luna - Sculpted intimate toy
+- Night Ritual - Pillow mist & body serum
+- The Duo - Gift set of best sellers
+
+## Pages
+- Home: https://x-store-prod.walterkibe7.workers.dev/
+- Shop: https://x-store-prod.walterkibe7.workers.dev/shop.html
+- Product: https://x-store-prod.walterkibe7.workers.dev/product.html?id={product-id}
+- Cart: https://x-store-prod.walterkibe7.workers.dev/cart.html
+- Checkout: https://x-store-prod.walterkibe7.workers.dev/checkout.html
+- Account: https://x-store-prod.walterkibe7.workers.dev/account.html
+- Login: https://x-store-prod.walterkibe7.workers.dev/login.html
+- Signup: https://x-store-prod.walterkibe7.workers.dev/signup.html
+
+## API
+- Products: GET /api/products
+- Orders: POST /api/orders
+- Admin: POST /api/admin/login
+`, {
+                    headers: { "Content-Type": "text/plain" }
+                });
+            }
             // Fall through to assets for static files (HTML, CSS, JS, etc.)
+            // with Cache-Control + gzip applied.
             else {
-                return env.ASSETS.fetch(request);
+                return serveAsset(request, env);
             }
 
             // Add CORS headers to all responses
             Object.entries(corsHeaders).forEach(([key, value]) => {
                 response.headers.set(key, value);
             });
+
+            // Add security headers to all responses
+            Object.entries(securityHeaders).forEach(([key, value]) => {
+                response.headers.set(key, value);
+            });
+
+            // Cache policy for API responses: product reads are safe to reuse
+            // for a minute; everything else (auth, orders, customers, settings)
+            // must never be cached by browsers or proxies.
+            if (path === "/api/products" || path.match(/^\/api\/products\/[^/]+$/)) {
+                response.headers.set("Cache-Control", "public, max-age=60");
+            } else {
+                response.headers.set("Cache-Control", "no-store");
+            }
 
             return response;
         } catch (error) {
@@ -755,7 +902,7 @@ async function createPendingOrder(env, data) {
     }
 
     const deliveryMethod = delivery?.method || "Standard delivery";
-    const shipping = deliveryMethod.toLowerCase().includes("express") ? 12 : 5;
+    const shipping = deliveryMethod.toLowerCase().includes("express") ? 1550 : 650;
 
     // Look up products and compute subtotal from D1 prices
     let subtotal = 0;

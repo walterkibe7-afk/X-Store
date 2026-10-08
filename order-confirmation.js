@@ -38,6 +38,12 @@ function setText(el, text) {
     if (el) el.textContent = text;
 }
 
+// Whole-shilling KES formatting used across the storefront.
+function formatKES(value) {
+    const n = Math.round(Number(value) || 0);
+    return "KSh " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 // One row per product line: product, quantity, unit price and line total.
 function buildItem(item) {
     const price = Number(item.price) || 0;
@@ -148,9 +154,9 @@ function renderConfirmation() {
         (typeof order.shipping === "number" ? order.shipping : 5);
     const total = typeof order.total === "number" ? order.total : subtotal + shipping;
 
-    setText(subtotalEl, "$" + subtotal);
-    setText(shippingEl, "$" + shipping);
-    setText(totalEl, "$" + total);
+    setText(subtotalEl, formatKES(subtotal));
+    setText(shippingEl, formatKES(shipping));
+    setText(totalEl, formatKES(total));
 
     if (order.delivery) {
         const from = order.delivery.from;

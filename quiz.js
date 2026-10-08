@@ -1,9 +1,13 @@
 // =========================
 // FIND YOUR MATCH QUIZ
-// Front-end prototype only:
-// the match is worked out in the browser from the answers, and
-// email is not sent anywhere yet.
+// Fetches products from API for matching.
 // =========================
+
+// Whole-shilling KES formatting used across the storefront.
+function formatKES(value) {
+    const n = Math.round(Number(value) || 0);
+    return "KSh " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 const startButton = document.querySelector(".quiz-start");
 const quizSection = document.querySelector(".quiz-flow-section");
@@ -20,7 +24,46 @@ const restartButton = document.querySelector("#restart-quiz");
 const saveResults = document.querySelector("#save-results");
 const quizEmail = document.querySelector("#quiz-email");
 
-const CATALOGUE = window.PRODUCTS || [];
+let CATALOGUE = [];
+
+async function loadCatalogue() {
+    try {
+        const res = await fetch("/api/products?active=true&limit=100");
+        const { products } = await res.json();
+        CATALOGUE = products.map(adaptProduct);
+    } catch (e) {
+        console.error("Failed to load products for quiz:", e);
+        CATALOGUE = [];
+    }
+}
+
+function adaptProduct(p) {
+    const imageClasses = ["image-a", "image-b", "image-c", "image-d", "image-e", "image-f", "image-g", "image-h"];
+    const idx = imageClasses.findIndex(c => p.id.includes(c.replace('image-', ''))) % imageClasses.length;
+    const imageClass = imageClasses[Math.max(0, idx >= 0 ? idx : 0)];
+
+    return {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        subcategory: p.subcategory,
+        price: p.price,
+        oldPrice: p.compare_price,
+        badge: p.badge,
+        badgeClass: p.badge ? p.badge.toLowerCase().replace(/\s+/g, '-') : '',
+        rating: p.rating,
+        reviews: p.review_count,
+        featured: !!p.featured,
+        newest: false,
+        image: imageClass,
+        description: p.description,
+        details: p.details,
+        care: '',
+        shipping: ''
+    };
+}
+
+loadCatalogue();
 
 let currentQuestion = 1;
 const totalQuestions = questions.length;
@@ -78,9 +121,9 @@ const MATCH_SCORES = {
 // so it never fights the other four answers.
 const PRICE_BANDS = {
     5: {
-        under30: { min: 0, max: 30 },
-        "30to50": { min: 30, max: 50 },
-        "50to75": { min: 50, max: 75 }
+        under30: { min: 0, max: 3000 },
+        "30to50": { min: 3000, max: 6000 },
+        "50to75": { min: 6000, max: 100000 }
     }
 };
 
@@ -141,7 +184,7 @@ function renderMatch(product) {
     if (description) description.textContent = product.description || "";
 
     const price = document.querySelector(".result-price");
-    if (price) price.textContent = "$" + product.price;
+    if (price) price.textContent = formatKES(product.price);
 
     const link = document.querySelector(".result-link");
     if (link) link.setAttribute("href", "product.html?id=" + encodeURIComponent(product.id));

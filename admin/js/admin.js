@@ -63,6 +63,7 @@ const Admin = (() => {
   function pill(status){ return '<span class="pill p-'+status.toLowerCase()+'">'+esc(status)+'</span>'; }
   function badgeTag(b){ return b ? '<span class="badge-tag">'+esc(b)+'</span>' : '<span style="color:var(--text-2)">—</span>'; }
   function thumb(label){ return '<div class="thumb">'+esc(label||'Elle')+'</div>'; }
-  return { TAXONOMY, MOCK_PRODUCTS, mount, toast, esc, pill, badgeTag, thumb, requireAuth, apiFetch, logout };
+  function money(n){ const v = Math.round(Number(n) || 0); return 'KSh ' + v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  return { TAXONOMY, MOCK_PRODUCTS, mount, toast, esc, pill, badgeTag, thumb, money, requireAuth, apiFetch, logout };
 })();
 window.Admin = Admin;

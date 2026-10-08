@@ -21,7 +21,7 @@ function render(){
   tb.innerHTML=list.map(r=>{
     const name = ((r.first_name||'')+' '+(r.last_name||'')).trim() || r.email || 'Customer';
     const orders = Number(r.order_count||0);
-    return '<tr><td><a class="link" href="customer-detail.html?id='+encodeURIComponent(r.id)+'"><strong>'+Admin.esc(name)+'</strong></a></td><td>'+Admin.esc(r.email||'—')+'</td><td>'+orders+' order'+(orders===1?'':'s')+'</td><td>$'+Number(r.total_spent||0).toFixed(2)+'</td><td>'+shortDate(r.created_at)+'</td></tr>';
+    return '<tr><td><a class="link" href="customer-detail.html?id='+encodeURIComponent(r.id)+'"><strong>'+Admin.esc(name)+'</strong></a></td><td>'+Admin.esc(r.email||'—')+'</td><td>'+orders+' order'+(orders===1?'':'s')+'</td><td>'+Admin.money(r.total_spent)+'</td><td>'+shortDate(r.created_at)+'</td></tr>';
   }).join('');
 }
 init();
