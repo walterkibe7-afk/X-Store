@@ -389,7 +389,7 @@ html.is-expand .intro-slide { transition: none; }
 .self-care-content { padding: clamp(50px, 7vw, 96px); display: flex; flex-direction: column; justify-content: center; }
 .self-care-content h2 { max-width: 600px; }
 .self-care-content > p:not(.eyebrow) { max-width: 430px; color: var(--gray); line-height: 1.8; font-size: 14px; margin: 30px 0; }
-.self-care-image { background: linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)), url("https://images.unsplash.com/photo-1600428877878-1a0e5a2d9a4a?auto=format&fit=crop&w=1300&q=85"); background-size: cover; background-position: center; }
+.self-care-image { background: linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)), url("https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1300&q=85"); background-size: cover; background-position: center; }
 .newsletter { padding: 120px max(var(--gutter), (100% - var(--container)) / 2); background: var(--black); color: white; text-align: center; }
 .newsletter-inner { max-width: 650px; margin: auto; }
 .newsletter h2 { font-size: clamp(50px, 6vw, 82px); }
