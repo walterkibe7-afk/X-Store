@@ -102,11 +102,17 @@ function assetCacheControl(contentType) {
     return "public, max-age=86400";
 }
 
-// Serve a static asset with Cache-Control + gzip (when the client accepts it).
+// Serve a static asset with Cache-Control (compression handled by Cloudflare edge).
 async function serveAsset(request, env) {
     const response = await env.ASSETS.fetch(request);
     const headers = new Headers(response.headers);
-    const contentType = headers.get("Content-Type") || "";
+    let contentType = headers.get("Content-Type") || "";
+    
+    // Ensure charset for text/html
+    if (contentType.includes("text/html") && !contentType.includes("charset")) {
+        contentType = contentType + "; charset=utf-8";
+    }
+    headers.set("Content-Type", contentType);
     headers.set("Cache-Control", assetCacheControl(contentType));
     headers.set("Vary", "Accept-Encoding");
 
@@ -126,23 +132,6 @@ async function serveAsset(request, env) {
     Object.entries(securityHeaders).forEach(([key, value]) => {
         headers.set(key, value);
     });
-
-    const acceptsGzip = (request.headers.get("Accept-Encoding") || "").toLowerCase().includes("gzip");
-    const compressible = COMPRESSIBLE_TYPES.test(contentType);
-    const hasBody = (response.status === 200 || response.status === 404);
-
-    if (acceptsGzip && compressible && hasBody && !headers.get("Content-Encoding")) {
-        const buf = await response.arrayBuffer();
-        if (buf.byteLength > 0) {
-            const stream = new Blob([buf]).stream().pipeThrough(new CompressionStream("gzip"));
-            headers.delete("Content-Length");
-            return new Response(stream, {
-                status: response.status,
-                statusText: response.statusText,
-                headers
-            });
-        }
-    }
 
     return new Response(response.body, {
         status: response.status,
@@ -324,16 +313,14 @@ export default {
             }
             // Health check
             else if (path === "/api/health" && method === "GET") {
-                response = new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
-                    headers: { "Content-Type": "application/json", ...corsHeaders }
+                response = jsonResponse({ status: "ok", timestamp: new Date().toISOString() });
+                Object.entries(corsHeaders).forEach(([key, value]) => {
+                    response.headers.set(key, value);
                 });
             }
             // Unknown /api/* path -> JSON 404 (never HTML for API clients)
             else if (path.startsWith("/api/")) {
-                response = new Response(JSON.stringify({ error: "Not found" }), {
-                    status: 404,
-                    headers: { "Content-Type": "application/json" }
-                });
+                response = jsonResponse({ error: "Not found" }, 404);
             }
             // Static files served directly (robots.txt, llms.txt)
             else if (path === "/robots.txt" && method === "GET") {
@@ -877,7 +864,7 @@ async function resetFailedLogin(request, env) {
 function jsonResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json; charset=utf-8" }
     });
 }
 

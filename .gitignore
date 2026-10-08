@@ -18,3 +18,17 @@ node_modules/
 
 # Logs
 *.log
+
+# Build output / deploy staging
+dist/
+.wrangler/
+
+# Debug / probe artefacts (never ship)
+*.bin
+_curlv.txt
+headers_*.txt
+body_*.bin
+_body_*.bin
+test_*.json
+_start_dev.bat
+_echo_srv.py
