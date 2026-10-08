@@ -33,24 +33,24 @@
 .quantity { font-size: 14px; }
 .add-to-cart { border: none; height: 56px; background: var(--black); color: white; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s ease; }
 .add-to-cart:hover { background: #34312e; }
-.why-section { padding: 100px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: .7fr 1.3fr; gap: 100px; }
+.why-section { padding: 64px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: .7fr 1.3fr; gap: 100px; }
 .why-heading p, .reviews-header p, .related-heading p, .product-quiz p { margin: 0 0 14px; font-size: 10px; font-weight: 700; letter-spacing: .15em; color: var(--gray); }
 .why-heading h2 { margin: 0; font-family: "DM Sans", sans-serif; font-size: clamp(38px, 4vw, 58px); font-weight: 500; line-height: 1.05; letter-spacing: -.035em; }
 .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
 .why-card { border-top: 1px solid var(--line); padding-top: 18px; }
 .why-card span { color: var(--gray); font-size: 11px; }
-.why-card h3 { margin: 50px 0 12px; font-size: 17px; font-family: "DM Sans", sans-serif; font-weight: 500; }
+.why-card h3 { margin: 24px 0 12px; font-size: 17px; font-family: "DM Sans", sans-serif; font-weight: 500; }
 .why-card p { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.7; }
-.reviews-section { padding: 110px 0; }
-.reviews-header { display: flex; align-items: end; justify-content: space-between; margin-bottom: 55px; }
+.reviews-section { padding: 64px 0; }
+.reviews-header { display: flex; align-items: end; justify-content: space-between; margin-bottom: 32px; }
 .reviews-header h2, .related-heading h2 { margin: 0; font-family: "DM Sans", sans-serif; font-size: clamp(38px, 4vw, 56px); font-weight: 500; letter-spacing: -.035em; }
 .overall-rating { display: flex; align-items: center; gap: 18px; }
 .overall-rating strong { font-family: "DM Sans", sans-serif; font-size: 52px; font-weight: 500; }
 .overall-rating .stars { letter-spacing: 2px; font-size: 12px; }
 .overall-rating span { display: block; margin-top: 4px; color: var(--gray); font-size: 11px; }
 .review-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.related-section { padding: 30px 0 120px; }
-.related-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 35px; }
+.related-section { padding: 24px 0 72px; }
+.related-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 24px; }
 .related-heading .text-link { color: var(--black); font-size: 12px; text-decoration: underline; text-underline-offset: 5px; border-bottom: none; }
 .related-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .related-image { position: relative; aspect-ratio: .85 / 1; display: flex; align-items: flex-start; justify-content: space-between; padding: 15px; overflow: hidden; }
@@ -75,8 +75,8 @@
 .product-quiz h2 { margin: 0 0 35px; font-family: "DM Sans", sans-serif; font-size: clamp(50px, 6vw, 82px); font-weight: 500; line-height: .98; letter-spacing: -.04em; }
 .product-quiz .button-dark { background: white; color: var(--black); }
 .review-card { padding: 30px; background: var(--cream-dark); }
-.review-card .stars { margin-bottom: 45px; letter-spacing: 2px; font-size: 12px; }
-.review-card p { margin: 0 0 30px; font-family: "DM Sans", sans-serif; font-size: 22px; line-height: 1.35; }
+.review-card .stars { margin-bottom: 24px; letter-spacing: 2px; font-size: 12px; }
+.review-card p { margin: 0 0 20px; font-family: "DM Sans", sans-serif; font-size: 22px; line-height: 1.35; }
 .review-card span { color: var(--gray); font-size: 11px; }
 .buy-now { width: 100%; height: 56px; margin-top: 10px; border: 1px solid var(--black); background: transparent; color: var(--black); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s ease, color .2s ease; }
 .buy-now:hover { background: var(--black); color: white; }
@@ -110,14 +110,14 @@
     .purchase-area { grid-template-columns: 100px 1fr; }
     .shipping-note { grid-template-columns: 1fr; gap: 15px; }
     .shipping-note div + div { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 15px; }
-    .why-section { padding: 75px 0; }
+    .why-section { padding: 48px 0; }
     .why-grid { grid-template-columns: 1fr; }
     .why-card h3 { margin-top: 25px; }
-    .reviews-section { padding: 75px 0; }
+    .reviews-section { padding: 48px 0; }
     .reviews-header { align-items: start; flex-direction: column; gap: 30px; }
     .review-grid { grid-template-columns: 1fr; }
     .review-card p { font-size: 20px; }
-    .related-section { padding-bottom: 75px; }
+    .related-section { padding-bottom: 48px; }
     .related-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .related-info { flex-direction: column; gap: 8px; }
     .product-quiz { min-height: 420px; margin-bottom: 75px; padding: 40px 25px; }
