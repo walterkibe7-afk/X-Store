@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found | Elle</title>
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="/style.css?v=0425f98">
+    <link rel="stylesheet" href="/order-confirmation.css?v=0425f98">
+    <style>
+        .notfound-container {
+            width: min(780px, 100% - (var(--gutter) * 2));
+            margin: 0 auto;
+            padding: 90px 0 110px;
+            text-align: center;
+        }
+        .notfound-code {
+            margin: 0;
+            font-family: "DM Sans", sans-serif;
+            font-size: clamp(90px, 16vw, 180px);
+            font-weight: 500;
+            line-height: .9;
+            letter-spacing: -.05em;
+        }
+        .notfound-title {
+            margin: 26px 0 0;
+            font-family: "DM Sans", sans-serif;
+            font-size: clamp(26px, 4vw, 40px);
+            font-weight: 500;
+            letter-spacing: -.02em;
+        }
+        .notfound-msg {
+            margin: 18px auto 0;
+            max-width: 460px;
+            color: var(--gray);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .notfound-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 42px;
+        }
+        .notfound-actions .btn { min-width: 220px; }
+        @media (max-width: 600px) {
+            .notfound-container { padding: 60px 0 80px; }
+            .notfound-actions { flex-direction: column; }
+            .notfound-actions .btn { width: 100%; }
+        }
+        @media print {
+            .header, .footer, .notfound-actions { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo"><a href="/index.html">Elle</a></div>
+        <div class="header-right">
+            <span>404 · NOT FOUND</span>
+        </div>
+    </header>
+
+    <main class="notfound-container">
+        <p class="notfound-code">404</p>
+        <h1 class="notfound-title">This page doesn't exist.</h1>
+        <p class="notfound-msg">The link may be broken or the page may have moved. Nothing to see here — but everything worth seeing is still in the shop.</p>
+        <div class="notfound-actions">
+            <a href="/index.html" class="btn btn-primary">BACK HOME</a>
+            <a href="/shop.html" class="btn btn-secondary">BROWSE THE SHOP</a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-logo">Elle</div>
+        <nav class="footer-nav">
+            <a href="/shop.html">Shop</a>
+            <a href="/shop.html?category=intimate">Intimate</a>
+            <a href="/shop.html?category=wellness">Wellness</a>
+            <a href="/about.html">About</a>
+            <a href="/quiz.html">Find Your Match</a>
+        </nav>
+        <div class="footer-bottom">
+            <span>© 2026 Elle</span>
+            <div class="footer-legal">
+                <a href="/privacy.html">Privacy</a>
+                <a href="/terms.html">Terms</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

@@ -3,14 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elle - Intimate Wellness</title>
+<title>Elle – Intimate Wellness</title>
 <meta name="description" content="Elle is intimate wellness made personal. Discover thoughtfully chosen products for pleasure, self-care and everyday wellbeing, delivered in discreet packaging.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" media="print" onload="this.media='all'">
-<link rel="preload" as="image" href="assets/hero-bg.jpg">
-<link rel="stylesheet" href="style.css">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap"></noscript>
+<link rel="preload" as="image" href="assets/hero-bg-800.webp" imagesrcset="assets/hero-bg-800.webp 800w, assets/hero-bg-1200.webp 1200w, assets/hero-bg-1920.webp 1920w" imagesizes="100vw" fetchpriority="high">
+<link rel="preload" as="image" href="assets/hero-slot-400.webp" imagesrcset="assets/hero-slot-400.webp 400w" imagesizes="120px" fetchpriority="high">
+<style>/* Critical: navbar+hero first paint (full styles in style.css) */
+*{margin:0;padding:0;box-sizing:border-box}:root{--cream:#e8e5ea;--white:#f2f0f3;--black:#252326;--gutter:40px;--container:1380px}body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--black)}.navbar{height:82px;padding:0 max(var(--gutter),(100% - var(--container))/2);display:flex;align-items:center;justify-content:space-between;background:rgba(242,240,243,.6);position:sticky;top:0;z-index:50}.logo{font-size:34px;font-weight:700;line-height:1}.hero{min-height:100vh;margin-top:-82px;display:flex;align-items:flex-end;position:relative;overflow:hidden;background:var(--cream)}.hero-media{position:absolute;inset:0}.hero-media img{width:100%;height:100%;object-fit:cover;object-position:25% center;display:block;aspect-ratio:1200/670}.hero-content{position:relative;z-index:1;width:100%;max-width:660px;min-height:62vh;display:flex;flex-direction:column;justify-content:flex-end;gap:22px;padding:0 clamp(24px,6vw,110px) clamp(32px,5vw,64px)}.hero-title{font-size:clamp(90px,15vw,210px);font-weight:700;line-height:.9;letter-spacing:-.04em;color:#fff;font-synthesis:none;word-spacing:0;min-width:0}.hero-mask{display:block;overflow:hidden;min-width:0}.hero-mask>span{display:inline-block;transform:translateY(110%)}.hero-description,.hero-buttons{opacity:0;transform:translateY(24px)}.intro{position:fixed;inset:0;z-index:200;background:#fff;display:none;place-items:center}.intro.is-intro{display:grid}.intro[hidden]{display:none}.intro-word{font-size:clamp(56px,10vw,130px);font-weight:700;letter-spacing:-.04em;font-synthesis:none}</style>
+<link rel="preload" as="style" href="style.css?v=0425f98">
+<link rel="stylesheet" href="style.css?v=0425f98" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="style.css?v=0425f98"></noscript>
 </head>
 <body>
 <svg style="display:none" aria-hidden="true">
@@ -20,7 +25,7 @@
 <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></symbol>
 </svg>
 <div class="intro" data-intro aria-hidden="true" hidden>
-<div class="intro-word" data-intro-word><span class="intro-half" data-intro-el>El</span><span class="intro-slot" data-intro-slot><img class="intro-slide is-active intro-crop-left" src="assets/hero-bg.jpg" alt=""><img class="intro-slide intro-crop-right" src="assets/hero-bg.jpg" alt=""><img class="intro-slide" src="assets/hero-bg.jpg" alt=""></span><span class="intro-half" data-intro-le>le</span></div>
+<div class="intro-word" data-intro-word><span class="intro-half" data-intro-el>El</span><span class="intro-slot" data-intro-slot><img class="intro-slide is-active intro-crop-left" src="assets/hero-slot-400.webp" srcset="assets/hero-slot-400.webp 400w" sizes="120px" width="400" height="223" decoding="async" alt=""><img class="intro-slide intro-crop-right" src="assets/hero-slot-400.webp" srcset="assets/hero-slot-400.webp 400w" sizes="120px" width="400" height="223" decoding="async" alt=""><img class="intro-slide" src="assets/hero-slot-400.webp" srcset="assets/hero-slot-400.webp 400w" sizes="120px" width="400" height="223" decoding="async" alt=""></span><span class="intro-half" data-intro-le>le</span></div>
 </div>
 <header class="navbar">
 <a href="index.html" class="logo">Elle</a>
@@ -46,7 +51,7 @@ Shop
 </header>
 <main>
 <section class="hero" data-hero>
-<div class="hero-media" aria-hidden="true"><img src="assets/hero-bg.jpg" alt="" fetchpriority="high"></div>
+<div class="hero-media" aria-hidden="true"><img src="assets/hero-bg-800.jpg" srcset="assets/hero-bg-800.jpg 800w, assets/hero-bg-1200.jpg 1200w, assets/hero-bg-1920.jpg 1920w" sizes="100vw" width="1200" height="670" fetchpriority="high" decoding="async" alt=""></div>
 <div class="hero-content">
 <h1 class="hero-title"><span class="hero-mask"><span>Elle</span></span></h1>
 <div class="hero-side"><p class="hero-description">Intimate wellness made personal — thoughtfully chosen products for pleasure, self-care and everything in between.</p>
@@ -101,14 +106,15 @@ Shop
 <footer class="footer">
 <div class="footer-top">
 <div class="footer-brand"><a href="index.html" class="logo footer-logo">Elle</a><p>Intimate wellness,<br>made personal.</p></div>
-<div class="footer-column"><h4>Shop</h4><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
-<div class="footer-column"><h4>Help</h4><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
-<div class="footer-column"><h4>About</h4><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
+<div class="footer-column"><h3 class="footer-heading">Shop</h3><a href="shop.html">All products</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a></div>
+<div class="footer-column"><h3 class="footer-heading">Help</h3><a href="help.html#contact">Contact</a><a href="help.html#shipping">Shipping</a><a href="help.html#shipping">Returns</a><a href="help.html#faq">FAQ</a></div>
+<div class="footer-column"><h3 class="footer-heading">About</h3><a href="about.html">Our story</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="quiz.html">Find your match</a></div>
 </div>
 <div class="footer-bottom"><span>&copy; 2026 Elle. All rights reserved.</span><span>Designed for intimate wellness.</span></div>
 </footer>
-<script src="cart-store.js"></script>
-<script src="products.js"></script>
-<script src="script.js"></script>
+<script>/* cart-store inline (index): badge only, avoids extra critical request */
+(function(){var K="xCart";function read(){try{var r=localStorage.getItem(K);if(!r)return[];var p=JSON.parse(r);return Array.isArray(p)?p.filter(function(l){return l&&typeof l.id==="string"&&typeof l.quantity==="number"&&l.quantity>0}):[]}catch(e){return[]}}function count(){return read().reduce(function(s,l){return s+l.quantity},0)}function sync(){var c=count();document.querySelectorAll(".cart-count").forEach(function(b){b.textContent=c});return c}window.CartStore=window.CartStore||{lines:read,count:count,syncBadges:sync,add:function(p,q){var ls=read();var ex=ls.find(function(l){return l.id===p.id});if(ex){ex.quantity+=Math.max(1,parseInt(q,10)||1)}else{ls.push({id:p.id,name:p.name,price:Number(p.price)||0,quantity:Math.max(1,parseInt(q,10)||1),category:p.category||"",description:"",image:p.image||""})}try{localStorage.setItem(K,JSON.stringify(ls))}catch(e){}return ls}};try{sync()}catch(e){}})();</script>
+<script src="script.js?v=0425f98" defer fetchpriority="low"></script>
+<script id="products-data" type="application/json">[{"id":"silk-touch","name":"Silk Touch","category":"Intimate","subcategory":"Toys","price":7650},{"id":"after-dark-oil","name":"After Dark Oil","category":"Wellness","subcategory":"Body & Massage","price":3650},{"id":"midnight-gummies","name":"Midnight Gummies","category":"Wellness","subcategory":"Gummies","price":3100},{"id":"velvet-mini","name":"Velvet Mini","category":"Intimate","subcategory":"Toys","price":5850},{"id":"slow-down-oil","name":"Slow Down Oil","category":"Wellness","subcategory":"Body & Massage","price":2850},{"id":"luna","name":"Luna","category":"Intimate","subcategory":"Toys","price":8300},{"id":"night-ritual","name":"Night Ritual","category":"Wellness","subcategory":"Self-Care","price":4400},{"id":"the-duo","name":"The Duo","category":"Intimate","subcategory":"Accessories","price":9350}]</script>
 </body>
 </html>

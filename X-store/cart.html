@@ -12,16 +12,33 @@
 <link rel="stylesheet" href="cart.css">
 </head>
 <body>
+<svg style="display:none" aria-hidden="true">
+<symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></symbol>
+<symbol id="icon-account" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></symbol>
+<symbol id="icon-cart" viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></symbol>
+<symbol id="icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></symbol>
+</svg>
 <div class="announcement"><p>Discreet packaging on every order</p></div>
 <header class="navbar">
 <a href="index.html" class="logo">X</a>
 <nav class="nav-links" id="site-nav">
-<a href="shop.html">Shop</a><a href="shop.html?category=intimate">Intimate</a><a href="shop.html?category=wellness">Wellness</a><a href="about.html">About</a><a href="quiz.html">Find Your Match</a>
+<div class="nav-dropdown">
+<button class="nav-dropdown-trigger" aria-expanded="false" aria-haspopup="true">
+Shop
+<svg class="chevron" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+</button>
+<div class="nav-dropdown-menu" role="menu">
+<a href="shop.html" role="menuitem">All Products</a>
+<a href="shop.html?category=intimate" role="menuitem">Intimate</a>
+<a href="shop.html?category=wellness" role="menuitem">Wellness</a>
+</div>
+</div>
+<a href="about.html">About</a>
 </nav>
 <div class="nav-actions">
-<button class="icon-button" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16L21 21"></path></svg></button>
-<a href="login.html" class="icon-button" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21c.8-4 3.1-6 7-6s6.2 2 7 6"></path></svg></a>
-<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg viewBox="0 0 24 24"><path d="M4 5h2l2 11h10l2-8H7"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg><span class="cart-count">0</span></a>
+<button class="icon-button" aria-label="Search"><svg aria-hidden="true"><use href="#icon-search"></use></svg></button>
+<a href="login.html" class="icon-button" aria-label="Account"><svg aria-hidden="true"><use href="#icon-account"></use></svg></a>
+<a href="cart.html" class="icon-button cart-button" aria-label="Shopping cart"><svg aria-hidden="true"><use href="#icon-cart"></use></svg><span class="cart-count">0</span></a>
 <button class="menu-button" aria-label="Open menu"><span></span><span></span></button>
 </div>
 </header>
