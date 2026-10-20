@@ -34,7 +34,7 @@ const exclude = [
 function shouldExclude(name) {
     if (name === '' || name === '.') return false;
     const lower = name.toLowerCase();
-    const base = name.split(path.sep).pop() || name;
+    const base = name.split(/[\\/]/).pop() || name;
     // Junk / debug artefacts that must never ship to dist
     if (/\.bin$/i.test(base)) return true;
     if (/^_/.test(base)) return true;
@@ -47,7 +47,7 @@ function shouldExclude(name) {
     // hero-bg-800/1200/1920 + hero-slot-400 ship to dist.
     if (/^hero-bg\.jpg$/i.test(base)) return true;
     return exclude.some(e => {
-        const el = e.toLowerCase();
+        const el = e.toLowerCase().replace(/\//g, path.sep);
         return lower === el || lower.startsWith(el + path.sep.toLowerCase());
     });
 }
