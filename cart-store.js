@@ -5,6 +5,44 @@
 // =========================
 
 const CART_KEY = "xCart";
+// The cart is bound to the origin it was first created on. Browsers scope
+// localStorage per origin, EXCEPT for local file:// pages, where unrelated
+// HTML files (even other projects) share one bucket. Without this stamp a cart
+// written while testing any other local page can show up here as a "populated"
+// shop on first open. Legitimate carts on a real (https) origin always match
+// their own origin, so they are never cleared by this check.
+const CART_ORIGIN_KEY = "xCartOrigin";
+
+function currentOrigin() {
+    try {
+        const origin = window.location ? window.location.origin : "null";
+        // "null" = opaque origin; nothing meaningful to bind to, allow as-is.
+        return (!origin || origin === "null") ? "" : origin;
+    } catch (e) {
+        return "";
+    }
+}
+
+// Run once when cart-store.js loads. Clears the stored cart only when it was
+// genuinely created on a different origin (another project / dev port) —
+// a same-origin cart, i.e. the current visitor's own cart, is kept untouched.
+function enforceCartOrigin() {
+    try {
+        const origin = currentOrigin();
+        if (!origin) return;
+        const stamp = localStorage.getItem(CART_ORIGIN_KEY);
+        if (stamp === origin) return;
+        if (stamp && stamp !== origin) {
+            localStorage.removeItem(CART_KEY);
+            // eslint-disable-next-line no-console
+            console.info("[cart] Cleared a cart created on '" + stamp +
+                "'. The browser storage was shared by another origin, so the shop starts empty.");
+        }
+        localStorage.setItem(CART_ORIGIN_KEY, origin);
+    } catch (e) {
+        // Storage unavailable (private mode etc.): cart just works in-memory.
+    }
+}
 
 function readCart() {
     try {
@@ -28,6 +66,12 @@ function isValidLine(line) {
 function writeCart(lines) {
     try {
         localStorage.setItem(CART_KEY, JSON.stringify(lines));
+        // Keep the origin stamp written by enforceCartOrigin() in place even
+        // if storages was cleared between loads.
+        const origin = currentOrigin();
+        if (origin && localStorage.getItem(CART_ORIGIN_KEY) !== origin) {
+            localStorage.setItem(CART_ORIGIN_KEY, origin);
+        }
     } catch (e) {}
     return lines;
 }
@@ -97,6 +141,39 @@ function syncCartBadges() {
     });
     return count;
 }
+
+// Cross-tab synchronization.
+// The `storage` event fires ONLY in other tabs/windows (never in the tab that
+// performed the write), which is exactly the cross-tab signal we need. When it
+// arrives, localStorage is already updated by the browser, so a fresh read()
+// pulls the other tab's value into this tab's view. We then re-sync the navbar
+// badges and re-broadcast a local `cart:updated` CustomEvent so any open cart
+// drawer / summary that listens for it re-renders immediately.
+function setupCartStorageSync() {
+    if (typeof window === "undefined" || typeof window.addEventListener !== "function") return;
+    window.addEventListener("storage", function (event) {
+        // `key === null` fires when localStorage was cleared wholesale; treat
+        // that as a cart change too.
+        if (event && event.key !== CART_KEY && event.key !== null) return;
+        try {
+            // Re-read so any in-memory projection reflects the other tab now.
+            const lines = readCart();
+            syncCartBadges();
+            window.dispatchEvent(new CustomEvent("cart:updated", {
+                detail: { source: "storage", lines: lines }
+            }));
+        } catch (e) {
+            window.dispatchEvent(new CustomEvent("cart:updated", {
+                detail: { source: "storage" }
+            }));
+        }
+    });
+}
+
+setupCartStorageSync();
+
+// Bind the cart to this origin before anything reads it (see CART_ORIGIN_KEY).
+enforceCartOrigin();
 
 window.CartStore = {
     add: addToCart,

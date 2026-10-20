@@ -86,7 +86,8 @@
             description: src.description || "",
             details: src.details || "",
             care: '',
-            shipping: ''
+            shipping: '',
+            stock: (typeof src.stock === "number") ? src.stock : null
         };
     }
 
@@ -148,9 +149,30 @@
     }
 
     function cardHTML(product) {
-        const badge = product.badge
-            ? '<span class="product-badge' + (product.badgeClass ? " " + product.badgeClass : "") + '">' + escapeHTML(product.badge) + "</span>"
+        const outOfStock = product.stock !== null && product.stock <= 0;
+        const lowStock = product.stock !== null && product.stock > 0 && product.stock <= 5;
+
+        // The marketing badge and the out-of-stock pill share the same
+        // top-left slot; show only one so they never overlap.
+        const badge = outOfStock
+            ? ""
+            : (product.badge
+                ? '<span class="product-badge' + (product.badgeClass ? " " + product.badgeClass : "") + '">' + escapeHTML(product.badge) + "</span>"
+                : "");
+
+        const stockBadge = outOfStock
+            ? '<span class="product-badge out-of-stock" aria-label="Out of stock">Out of stock</span>'
             : "";
+
+        const stockNote = lowStock
+            ? '<p class="stock-note" aria-label="Only ' + product.stock + ' left in stock">Only ' + product.stock + ' left in stock</p>'
+            : "";
+
+        // A disabled quick-add never fires a click event, so the delegated
+        // handler in script.js cannot add an out-of-stock product.
+        const quickAdd = outOfStock
+            ? '<button class="quick-add" disabled aria-disabled="true">Out of stock</button>'
+            : '<button class="quick-add" data-add-to-cart="true" aria-label="Add ' + escapeHTML(product.name) + ' to cart">Add to cart</button>';
 
         const stars = new Array(product.rating + 1).join("&#9733;") + " <small>(" + product.reviews + ")</small>";
 
@@ -158,21 +180,30 @@
             ? "<div><strong>" + formatKES(product.price) + "</strong><del>" + formatKES(product.oldPrice) + "</del></div>"
             : "<strong>" + formatKES(product.price) + "</strong>";
 
+        // The image block is a <div>, not an <a>: the whole image stays
+        // clickable as an overlay link, but the Add to cart button sits beside
+        // that link (not inside it) so adding to the cart can never trigger
+        // the product-page navigation.
         return '<article class="shop-product cat-' + escapeHTML(product.categorySlug) + '"' +
             ' data-product-id="' + escapeHTML(product.id) + '"' +
             ' data-name="' + escapeHTML(product.name) + '"' +
             ' data-price="' + product.price + '"' +
-            ' data-category="' + escapeHTML(product.category) + '">' +
-            '<a href="product.html?id=' + encodeURIComponent(product.id) + '" class="shop-product-image ' + escapeHTML(product.image) + '">' +
+            ' data-category="' + escapeHTML(product.category) + '"' +
+            ' data-image="' + escapeHTML(product.image) + '"' +
+            ' data-stock="' + (product.stock === null ? "" : product.stock) + '">' +
+            '<div class="shop-product-image ' + escapeHTML(product.image) + '">' +
+            '<a href="product.html?id=' + encodeURIComponent(product.id) + '" class="shop-product-link" aria-label="View ' + escapeHTML(product.name) + '"></a>' +
             badge +
+            stockBadge +
             '<button class="heart-button" aria-label="Wishlist">&#9825;</button>' +
-            '<button class="quick-add">Quick add</button>' +
-            "</a>" +
+            quickAdd +
+            "</div>" +
             '<div class="shop-product-info"><div>' +
             '<p class="cat-' + escapeHTML(product.categorySlug) + '">' + escapeHTML(product.category) +
             " &middot; " + escapeHTML(product.subcategory) + "</p>" +
             "<h2>" + escapeHTML(product.name) + "</h2>" +
             '<span class="stars">' + stars + "</span>" +
+            stockNote +
             "</div>" + price + "</div>" +
             "</article>";
     }
@@ -353,8 +384,13 @@
             if (!Array.isArray(list)) throw new Error("unexpected response shape");
             CATALOGUE = list.map(adaptProduct);
         } catch (e) {
-            console.error("Failed to load products:", e && e.message ? e.message : e);
-            CATALOGUE = [];
+            // Phase 2d: never break the demo. When the API is unreachable
+            // (offline, local dev without a Worker, or no network) fall back to
+            // the static catalogue that products.js publishes as window.PRODUCTS.
+            // That list is already in storefront format, so it can drive the grid
+            // without re-mapping (re-mapping would clobber each product's image).
+            const fallback = (typeof window !== "undefined" && window.PRODUCTS) || [];
+            CATALOGUE = Array.isArray(fallback) ? fallback : [];
         } finally {
             loading = false;
             render();

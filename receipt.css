@@ -1,0 +1,84 @@
+/* =========================
+   RECEIPT
+   Same language as order-confirmation, plus a print stylesheet so the
+   page can be printed or saved as PDF without site chrome.
+   ========================= */
+
+.receipt-container {
+    width: min(780px, 100% - (var(--gutter) * 2));
+    margin: 0 auto;
+    padding: 48px 0 64px;
+    text-align: center;
+}
+
+.receipt-eyebrow {
+    margin: 0 0 14px;
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .2em;
+}
+
+.receipt-title {
+    margin: 0;
+    font-family: "DM Sans", sans-serif;
+    font-size: clamp(36px, 6vw, 58px);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -.03em;
+}
+
+.receipt-date {
+    margin: 14px 0 0;
+    color: var(--gray);
+    font-size: 13px;
+}
+
+.receipt-msg {
+    margin: 20px auto 0;
+    max-width: 440px;
+    color: var(--gray);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.receipt-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-top: 40px;
+    text-align: left;
+}
+
+.receipt-label {
+    margin: 0 0 9px;
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.receipt-address, .receipt-payment { font-size: 13px; line-height: 1.65; }
+.receipt-address p, .receipt-payment p { margin: 0 0 5px; }
+
+.receipt-thanks {
+    margin: 34px 0 0;
+    color: var(--gray);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+    .receipt-container { padding: 36px 0 60px; }
+    .receipt-meta { grid-template-columns: 1fr; gap: 22px; }
+}
+
+/* --- print: receipt only, no site chrome --- */
+@media print {
+    .header, .footer, .actions, #print-receipt { display: none !important; }
+    .receipt-container { width: 100%; padding: 0; }
+    .receipt-meta { break-inside: avoid; }
+    .order-item { break-inside: avoid; }
+    body { background: white; }
+}

@@ -21,7 +21,14 @@ const exclude = [
     '_tools',
     '_tests',
     'X-store.rar',
-    '.gitignore'
+    '.gitignore',
+    'BACKEND_HANDOFF.md',
+    'AGENT_FIXES_FROM_VIDEOS.md',
+    'OAUTH_SETUP.md',
+    // Local video/VO production assets (only consumed by _tools scripts,
+    // never referenced by any page) - ~12 MB of binaries, never ship.
+    'assets/vo',
+    'assets/promo'
 ];
 
 function shouldExclude(name) {
@@ -36,6 +43,9 @@ function shouldExclude(name) {
     if (/^body_.*\.bin$/i.test(base)) return true;
     if (/\.log$/i.test(base)) return true;
     if (/^x-store\.rar$/i.test(base)) return true;
+    // Full-size source hero (2.7MB) is never referenced; only resized
+    // hero-bg-800/1200/1920 + hero-slot-400 ship to dist.
+    if (/^hero-bg\.jpg$/i.test(base)) return true;
     return exclude.some(e => {
         const el = e.toLowerCase();
         return lower === el || lower.startsWith(el + path.sep.toLowerCase());
@@ -43,9 +53,14 @@ function shouldExclude(name) {
 }
 
 function minifyJS(code) {
-    // NOTE: naive regex minification breaks URLs (https://) and regex
-    // literals, so ship JS verbatim until a real minifier is wired in.
-    return code;
+    // esbuild minifies safely (regex would break https:// and literals).
+    // Falls back to verbatim if esbuild is unavailable (CI without devDeps).
+    try {
+        const esbuild = require('esbuild');
+        return esbuild.transformSync(code, { minify: true, target: 'es2019' }).code;
+    } catch (e) {
+        return code;
+    }
 }
 
 function minifyCSS(code) {

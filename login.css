@@ -1,4 +1,4 @@
-:root { --cream: #e8e5ea; --cream-dark: #dfdbe2; --white: #f2f0f3; --black: #252326; --gray: #817586; --line: #d5d0da; --accent: #817586; }
+:root { --cream: #e8e5ea; --cream-dark: #dfdbe2; --white: #f2f0f3; --black: #252326; --gray: #58505e; --line: #d5d0da; --accent: #58505e; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "DM Sans", sans-serif; background: var(--cream); color: var(--black); }
 a { color: inherit; }
@@ -16,18 +16,76 @@ button, input { font: inherit; }
 .label-row label { margin-bottom: 0; }
 .label-row a { font-size: 12px; color: var(--gray); text-decoration: underline; text-underline-offset: 3px; }
 .form-group input { width: 100%; height: 52px; border: 1px solid var(--line); background: #fff; padding: 0 15px; font-family: inherit; font-size: 14px; outline: none; transition: border-color .2s ease, box-shadow .2s ease; }
+.form-group input:hover { border-color: #bfb9c8; }
 .form-group input:focus { border-color: var(--black); box-shadow: 0 0 0 1px var(--black); }
 .checkbox-row { display: flex; align-items: center; gap: 9px; font-size: 13px; margin-bottom: 25px; cursor: pointer; color: var(--gray); }
 .checkbox-row input { width: 15px; height: 15px; accent-color: var(--black); }
-.auth-button { width: 100%; height: 54px; border: none; background: var(--black); color: white; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .04em; cursor: pointer; transition: opacity .2s ease; }
-.auth-button:hover { opacity: .85; }
+.checkbox-row input:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
+/* ---- Primary action: Elle solid black ----
+   Mirrors the site's .button-dark tokens: 52px height, uppercase 12px
+   letter-spaced label, firm background shift on hover, pressed state on
+   :active and a visible ring for keyboard users. */
+.auth-button {
+    width: 100%; height: 52px;
+    display: inline-flex; align-items: center; justify-content: center;
+    position: relative;
+    border: 1px solid var(--black);
+    background: var(--black); color: #fff;
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background .25s ease, box-shadow .25s ease, transform .12s ease, opacity .25s ease, color .25s ease;
+}
+.auth-button:hover { background: #3a3540; border-color: #3a3540; box-shadow: 0 8px 20px rgba(37, 35, 38, .18); }
+.auth-button:active { transform: translateY(1px); box-shadow: 0 3px 10px rgba(37, 35, 38, .16); }
+.auth-button:focus-visible { outline: 2px solid var(--black); outline-offset: 3px; }
+.auth-button:disabled { opacity: .55; cursor: default; transform: none; box-shadow: none; }
+/* Loading state: the label blanks out and a small brand spinner takes over,
+   so a slow API round-trip never reads as a broken button. */
+.auth-button.is-loading { color: transparent; box-shadow: none; }
+.auth-button.is-loading::after {
+    content: ""; position: absolute; top: 50%; left: 50%;
+    width: 18px; height: 18px; margin: -9px 0 0 -9px;
+    border: 2px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff; border-radius: 50%;
+    animation: auth-button-spin .7s linear infinite;
+}
+.auth-button.is-loading:hover { background: var(--black); border-color: var(--black); }
+@keyframes auth-button-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .auth-button, .auth-button:hover, .auth-button:active { transition: none; transform: none; }
+    .auth-button.is-loading::after { animation-duration: 1.6s; }
+}
 .form-message { min-height: 20px; margin-top: 15px; text-align: center; font-size: 13px; line-height: 1.5; }
 .form-message.error { color: var(--accent); }
 .form-message.success { color: #4d7257; }
-.auth-divider { display: flex; align-items: center; gap: 15px; margin: 30px 0; color: #a8a2b0; font-size: 10px; letter-spacing: .12em; }
+.auth-divider { display: flex; align-items: center; gap: 15px; margin: 26px 0 24px; color: #a8a2b0; font-size: 10px; letter-spacing: .12em; }
 .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .switch-auth { text-align: center; font-size: 13px; color: var(--gray); }
 .switch-auth a { color: var(--black); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.google-btn-wrapper { width: 100%; margin-bottom: 20px; }
+.google-btn-container { width: 100%; display: flex; justify-content: center; }
+.google-btn-container > div { width: 100% !important; }
+/* ---- Secondary action: Elle outlined ----
+   Same box as the primary button (52px, same type scale) so the hierarchy
+   reads purely through weight: solid black vs. hairline outline, exactly
+   like the site's .button-dark / .button-light pairing. */
+.google-button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    width: 100%; height: 52px;
+    border: 1px solid var(--black); background: transparent;
+    color: var(--black); font-family: inherit;
+    font-size: 13px; font-weight: 500; letter-spacing: .01em;
+    cursor: pointer;
+    transition: background .25s ease, color .25s ease, transform .12s ease, box-shadow .25s ease;
+}
+.google-button:hover { background: var(--black); color: #fff; box-shadow: 0 8px 20px rgba(37, 35, 38, .18); }
+.google-button:active { transform: translateY(1px); }
+/* The coloured G keeps its recognisability on the inverted hover. */
+.google-button:hover .google-icon { background: #fff; border-radius: 50%; padding: 3px; margin: -3px; }
+.google-button:focus-visible { outline: 2px solid var(--black); outline-offset: 3px; }
+.google-button:disabled { opacity: .55; cursor: default; }
+.google-icon { flex-shrink: 0; }
 .back-link { margin-top: 25px; font-size: 12px; color: var(--gray); text-decoration: none; }
 .back-link:hover { color: var(--black); }
 @media (max-width: 600px) {

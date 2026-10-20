@@ -2,6 +2,12 @@
 // CHECKOUT PAGE
 // =========================
 
+// Turnstile token captured via data-callback on the widget.
+window.turnstileToken = "";
+window.onTurnstileSuccess = function(token) {
+    window.turnstileToken = token;
+};
+
 // Require login before checkout - check API first, fall back to localStorage
 (function () {
     let loggedIn = null;
@@ -10,7 +16,25 @@
     } catch (e) {}
     
     // Quick check - if localStorage says logged in, allow (will verify on API call later)
-    if (loggedIn === "true") return;
+    if (loggedIn === "true") {
+        if (typeof fetch === "function") {
+            try {
+                fetch("/api/auth/me", { credentials: "include" })
+                    .then(function (res) {
+                        if (res && res.status === 401) {
+                            try {
+                                localStorage.setItem("xCheckoutRedirect", "checkout.html");
+                                localStorage.removeItem("xLoggedIn");
+                                localStorage.removeItem("xUser");
+                            } catch (e) {}
+                            window.location.href = "login.html";
+                        }
+                    })
+                    .catch(function () {});
+            } catch (e) {}
+        }
+        return;
+    }
     
     // If not in localStorage, redirect to login
     try {
@@ -446,18 +470,19 @@ function isChecked(id) {
 
 // Inline status line for the M-Pesa prompt flow (separate from the red
 // error banner so "waiting" never reads as failure).
-function stkStatusEl() {
-    let el = document.getElementById("stkStatus");
-    if (el) return el;
-    el = document.createElement("div");
-    el.id = "stkStatus";
-    el.className = "stk-status";
-    el.setAttribute("role", "status");
-    el.hidden = true;
-    const anchor = document.querySelector(".place-order-section");
-    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(el, anchor);
-    return el;
-}
+    function stkStatusEl() {
+        let el = document.getElementById("stkStatus");
+        if (el) return el;
+        el = document.createElement("div");
+        el.id = "stkStatus";
+        el.className = "stk-status";
+        el.setAttribute("role", "status");
+        el.setAttribute("aria-live", "polite");
+        el.hidden = true;
+        const anchor = document.querySelector(".place-order-section");
+        if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(el, anchor);
+        return el;
+    }
 
 function showStkStatus(message) {
     const el = stkStatusEl();
@@ -481,10 +506,29 @@ function setPlacing(placing) {
     if (placeOrderButton) placeOrderButton.disabled = !!placing;
 }
 
+// The backend reports stock problems as HTTP 409 with a message like
+// "Insufficient stock for item <id>". Turn that into a plain-English notice
+// and resolve the id to a cart line name when possible, so the customer sees
+// WHICH product is short instead of a raw error code.
+function friendlyStockError(serverMsg, lines) {
+    const match = /Insufficient stock for item\s+(.+)/i.exec(serverMsg || "");
+    const id = match ? String(match[1]).trim() : "";
+    let name = "";
+    if (id && lines) {
+        const line = lines.find((l) => l && l.id === id);
+        if (line && line.name) name = line.name;
+    }
+    if (name) {
+        return "Only the remaining stock could be fulfilled. Please update your bag: '" + name + "' is now out of stock.";
+    }
+    return serverMsg || "One or more items in your bag are no longer available. Please review your cart and try again.";
+}
+
 // M-Pesa prompt (STK) flow: create the pending order server-side, push the
 // PIN prompt, then poll until Safaricom confirms. Only a confirmed payment
 // clears the cart and leaves checkout.
-async function placeStkOrder(email, lines) {
+async function placeStkOrder(email, lines, idempotencyKey) {
+    const idem = idempotencyKey || ((typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : ("idem_" + Date.now()));
     const phoneEl = document.getElementById("mobileMoneyNumber");
     const msisdn = (phoneEl && phoneEl.value ? phoneEl.value : fieldValue("phone")).trim();
     if (msisdn.replace(/\D/g, "").length < 9) {
@@ -501,9 +545,9 @@ async function placeStkOrder(email, lines) {
     let res = null;
     let data = null;
     try {
-        res = await fetch("/api/payments/stk", {
+         res = await fetch("/api/payments/stk", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "Idempotency-Key": idem },
             body: JSON.stringify({
                 email: email,
                 firstName: fieldValue("firstName"),
@@ -516,7 +560,9 @@ async function placeStkOrder(email, lines) {
                 postal: fieldValue("postal"),
                 country: fieldValue("country"),
                 items: lines.map(l => ({ id: l.id, quantity: l.quantity })),
-                delivery: { method: delivery.name }
+                delivery: { method: delivery.name },
+                turnstileToken: window.turnstileToken || "",
+                idempotencyKey: idem
             })
         });
         try {
@@ -526,6 +572,17 @@ async function placeStkOrder(email, lines) {
         }
     } catch (e) {
         data = null;
+    }
+
+    // HTTP 409: the backend could not reserve stock for one or more items
+    // (e.g. just sold in another tab). Surface a friendly, item-specific
+    // notice instead of the generic fallback, and abort so no phantom order
+    // is left pending.
+    if (res && res.status === 409) {
+        setPlacing(false);
+        clearStkStatus();
+        showCheckoutError(friendlyStockError((data && data.error) || "Insufficient stock", lines));
+        return;
     }
 
     if (!res || !res.ok || !data || !data.ok || !data.number) {
@@ -577,18 +634,19 @@ async function placeStkOrder(email, lines) {
 }
 
 // Inline error banner (no reload): created once, reused for validation + empty cart.
-function checkoutErrorEl() {
-    let el = document.getElementById("checkoutError");
-    if (el) return el;
-    el = document.createElement("div");
-    el.id = "checkoutError";
-    el.className = "checkout-error";
-    el.setAttribute("role", "alert");
-    el.hidden = true;
-    const anchor = document.querySelector(".place-order-section");
-    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(el, anchor);
-    return el;
-}
+    function checkoutErrorEl() {
+        let el = document.getElementById("checkoutError");
+        if (el) return el;
+        el = document.createElement("div");
+        el.id = "checkoutError";
+        el.className = "checkout-error";
+        el.setAttribute("role", "alert");
+        el.setAttribute("aria-live", "assertive");
+        el.hidden = true;
+        const anchor = document.querySelector(".place-order-section");
+        if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(el, anchor);
+        return el;
+    }
 
 function showCheckoutError(message) {
     const el = checkoutErrorEl();
@@ -658,10 +716,16 @@ if (placeOrderButton) {
 
         const email = fieldValue("email");
 
+        // Idempotency: one key per checkout attempt so double-clicks /
+        // retries / refreshes cannot create duplicate orders or payments.
+        const idempotencyKey = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
+            ? crypto.randomUUID()
+            : ("idem_" + Date.now());
+
         // M-Pesa prompt goes through the STK flow (server-created order +
         // PIN prompt + polling). Card and Paybill use the classic flow below.
         if (selectedPaymentMethod() === "mobile") {
-            await placeStkOrder(email, lines);
+            await placeStkOrder(email, lines, idempotencyKey);
             return;
         }
 
@@ -683,15 +747,18 @@ if (placeOrderButton) {
             items: lines.map(l => ({ id: l.id, quantity: l.quantity })),
             delivery: { method: delivery.name },
             payment: { method: payMethod, reference: payReference },
-            number: (payMethod === "paybill" && paybillOrderNumber) ? paybillOrderNumber : undefined
+            number: (payMethod === "paybill" && paybillOrderNumber) ? paybillOrderNumber : undefined,
+            turnstileToken: window.turnstileToken || "",
+            idempotencyKey: idempotencyKey
         };
 
         // Try API first
         let apiSuccess = false;
+        setPlacing(true);
         try {
             const res = await fetch("/api/orders", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
@@ -715,11 +782,21 @@ if (placeOrderButton) {
                 apiSuccess = true;
             } else {
                 const err = await res.json().catch(() => ({}));
+                // HTTP 409 = stock ran out between cart and checkout. Do not
+                // fall through to the local fallback (that would create a
+                // phantom order the server rejected); show a friendly,
+                // item-specific error and keep the customer on the page.
+                if (res.status === 409) {
+                    setPlacing(false);
+                    showCheckoutError(friendlyStockError(err.error || "Insufficient stock", lines));
+                    return;
+                }
                 console.warn("Order API failed:", err.error || res.status);
             }
         } catch (e) {
             console.warn("Order API unavailable, falling back to localStorage:", e);
         }
+        setPlacing(false);
 
         // Always save to localStorage for confirmation page (works offline)
         saveOrder(order);

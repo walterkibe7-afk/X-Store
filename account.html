@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="account.css?v=0425f98">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" media="all">
+<link rel="stylesheet" href="account.css?v=20261020a">
 </head>
 <body>
 <header class="account-header">
@@ -23,13 +23,20 @@
 <p>Manage your account and keep track of your Elle experience.</p>
 </section>
 <section class="account-grid">
-<a href="#" class="account-card"><span class="card-number">01</span><h2>Orders</h2><p>View your order history and order status.</p></a>
-<a href="#" class="account-card"><span class="card-number">02</span><h2>Profile</h2><p>Manage your personal information.</p></a>
-<a href="#" class="account-card"><span class="card-number">03</span><h2>Saved items</h2><p>View products you've added to your wishlist.</p></a>
-<a href="#" class="account-card"><span class="card-number">04</span><h2>Preferences</h2><p>Manage your Elle preferences and communications.</p></a>
+<a href="#orders" class="account-card" data-card="orders"><span class="card-number">01</span><h2>Orders</h2><p>View your order history and order status.</p></a>
+<a href="#profile" class="account-card" data-card="profile"><span class="card-number">02</span><h2>Profile</h2><p>Manage your personal information.</p></a>
+<a href="#wishlistSection" class="account-card" data-card="wishlist"><span class="card-number">03</span><h2>Saved items</h2><p>View products you've added to your wishlist.</p></a>
+<a href="#preferences" class="account-card" data-card="preferences"><span class="card-number">04</span><h2>Preferences</h2><p>Manage your Elle preferences and communications.</p></a>
 </section>
+
+<section id="wishlistSection" class="account-section">
+<h2>Saved items</h2>
+<div id="wishlistEmpty" class="account-empty">No saved items yet. Products you've wishlisted will appear here.</div>
+<div id="wishlistList" class="account-list" hidden></div>
+</section>
+
 <button id="logoutButton" class="logout-button" type="button">Log out</button>
 </main>
-<script src="account.js?v=0425f98"></script>
+<script src="account.js?v=20261020a"></script>
 </body>
 </html>

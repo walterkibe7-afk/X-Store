@@ -16,11 +16,128 @@ window.addEventListener("storage", (event) => {
     }
 });
 
+// =========================
+// WISHLIST
+// =========================
+
+const WISHLIST_KEY = "xWishlist";
+
+function readWishlist() {
+    try {
+        const raw = localStorage.getItem(WISHLIST_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.filter(function (w) {
+            return w && typeof w.id === "string" && w.id.length > 0;
+        }) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function writeWishlist(items) {
+    try {
+        localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
+        window.dispatchEvent(new CustomEvent("wishlist:updated", {
+            detail: { items: items }
+        }));
+    } catch (e) {}
+    return items;
+}
+
+function wishlistAdd(product) {
+    const items = readWishlist();
+    if (!items.find(function (w) { return w.id === product.id; })) {
+        items.push({
+            id: product.id,
+            name: product.name,
+            price: Number(product.price) || 0,
+            image: product.image || ""
+        });
+        writeWishlist(items);
+    }
+}
+
+function wishlistRemove(productId) {
+    const items = readWishlist().filter(function (w) { return w.id !== productId; });
+    writeWishlist(items);
+}
+
+function wishlistHas(productId) {
+    return readWishlist().some(function (w) { return w.id === productId; });
+}
+
+// Extract a product ID from a card element (supports both data-* and href patterns).
+function productIdFromCard(card) {
+    if (!card) return "";
+    const dataId = card.getAttribute("data-product-id");
+    if (dataId) return dataId;
+    const href = card.getAttribute("href") || "";
+    const match = href.match(/id=([^&]+)/);
+    return match ? match[1] : "";
+}
+
+window.WishlistStore = {
+    items: readWishlist,
+    add: wishlistAdd,
+    remove: wishlistRemove,
+    has: wishlistHas,
+    sync: function () {
+        document.querySelectorAll(".heart-button").forEach(function (heart) {
+            const card = heart.closest(".product-card, .shop-product");
+            const productId = productIdFromCard(card);
+            if (productId) {
+                const filled = wishlistHas(productId);
+                heart.textContent = filled ? "\u2665" : "\u2661";
+                heart.setAttribute("aria-pressed", filled ? "true" : "false");
+            }
+        });
+    }
+};
+
+// Initial sync of heart states on page load.
+try { WishlistStore.sync(); } catch (e) {}
+
+// Cross-tab sync for wishlist.
+window.addEventListener("storage", function (event) {
+    if (event && event.key !== WISHLIST_KEY && event.key !== null) return;
+    try { WishlistStore.sync(); } catch (e) {}
+});
+
 // Quick add and the wishlist hearts use event delegation, so they keep working
 // for product cards that are rendered after this script runs (the shop grid is
 // built from the shared catalogue in products.js).
 
-const QUICK_ADD_LABEL = "Quick add";
+const QUICK_ADD_LABEL = "Add to cart";
+// Used while a line is processing; never shown long enough to block the user.
+const QUICK_ADDED_LABEL = "Added \u2713";
+
+function showCartToast(productName) {
+    let toast = document.getElementById("cart-toast");
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "cart-toast";
+        toast.className = "cart-toast";
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-live", "polite");
+        document.body.appendChild(toast);
+    }
+    toast.textContent = "Added to cart \u2014 " + productName;
+    toast.classList.add("visible");
+    if (showCartToast.timer) window.clearTimeout(showCartToast.timer);
+    showCartToast.timer = window.setTimeout(() => {
+        toast.classList.remove("visible");
+    }, 2200);
+}
+
+function bumpCartBadge() {
+    const badge = cartCounter && cartCounter.classList ? cartCounter : document.querySelector(".cart-count");
+    if (!badge) return;
+    badge.classList.remove("bump");
+    // Force a reflow so the animation restarts on consecutive adds.
+    void badge.offsetWidth;
+    badge.classList.add("bump");
+}
 
 function quickAddProduct(button) {
     if (typeof CartStore === "undefined") {
@@ -30,6 +147,10 @@ function quickAddProduct(button) {
         }
         return;
     }
+
+    // Disabled buttons never reach this handler, but guard anyway so an
+    // unavailable product can never be added programmatically.
+    if (button.disabled) return;
 
     const card = button.closest(".product-card, .shop-product");
     const nameEl = card ? card.querySelector("h3, h2") : null;
@@ -44,19 +165,23 @@ function quickAddProduct(button) {
     const dataName = card ? card.getAttribute("data-name") : null;
     const dataPrice = card ? card.getAttribute("data-price") : null;
     const dataCategory = card ? card.getAttribute("data-category") : null;
+    const dataImage = card ? card.getAttribute("data-image") : null;
 
+    const addedId = (dataId || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
     CartStore.add(
         {
-            id: dataId || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            id: addedId,
             name: dataName || name,
             price: dataPrice !== null ? Number(dataPrice) : (isNaN(price) ? 0 : price),
             category: dataCategory || (categoryEl ? categoryEl.textContent.trim() : ""),
             description: "",
-            image: card ? card.getAttribute("data-image") : null
+            image: dataImage || ""
         },
         1
     );
     CartStore.syncBadges();
+    bumpCartBadge();
+    showCartToast(dataName || name);
 }
 
 document.addEventListener("click", (event) => {
@@ -67,24 +192,43 @@ document.addEventListener("click", (event) => {
     if (quickAdd) {
         event.preventDefault();
         event.stopPropagation();
+        if (quickAdd.disabled) return;
         quickAddProduct(quickAdd);
-        quickAdd.textContent = "Added \u2713";
+        // Concise inline confirmation, restored to the evergreen label after a
+        // moment. A toast (added by quickAddProduct) covers wider feedback.
+        quickAdd.classList.add("added");
+        quickAdd.textContent = QUICK_ADDED_LABEL;
         setTimeout(() => {
+            quickAdd.classList.remove("added");
             quickAdd.textContent = QUICK_ADD_LABEL;
         }, 1200);
         return;
     }
 
-    // Wishlist hearts are purely visual state, so a simple toggle is enough.
+    // Wishlist hearts persist to localStorage and sync across tabs.
     const heart = target.closest(".heart-button");
     if (heart) {
         event.preventDefault();
         event.stopPropagation();
+        const card = heart.closest(".product-card, .shop-product");
+        const productId = productIdFromCard(card);
+        if (!productId) return;
+
         const filled = heart.textContent.trim() === "\u2665";
-        heart.textContent = filled ? "\u2661" : "\u2665";
-        // The glyph swap is invisible to assistive tech, so the pressed state
-        // has to be exposed or the toggle announces nothing after activation.
-        heart.setAttribute("aria-pressed", filled ? "false" : "true");
+        if (filled) {
+            WishlistStore.remove(productId);
+            heart.textContent = "\u2661";
+            heart.setAttribute("aria-pressed", "false");
+        } else {
+            // Build a product record for the wishlist.
+            const nameEl = card.querySelector("h3, h2");
+            const priceEl = card.querySelector(".product-details strong, .shop-product-info strong");
+            const name = nameEl ? nameEl.textContent.trim() : "Product";
+            const price = priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, "")) : 0;
+            WishlistStore.add({ id: productId, name: name, price: price, image: "" });
+            heart.textContent = "\u2665";
+            heart.setAttribute("aria-pressed", "true");
+        }
     }
 });
 
@@ -94,7 +238,6 @@ document.addEventListener("click", (event) => {
 // =========================
 
 const newsletterForm = document.querySelector(".newsletter-form");
-
 if (newsletterForm) {
 newsletterForm.addEventListener("submit", (event) => {
 
@@ -202,8 +345,18 @@ window.addEventListener("scroll", () => {
 // =========================
 
 // The search panel reads the same catalogue as the shop grid (products.js),
-// so there is only ever one copy of a product's details.
-const SEARCH_PRODUCTS = (window.PRODUCTS || []).map((product) => ({
+// so there is only ever one copy of a product's details. On pages that inline
+// the catalogue as #products-data JSON (index.html), that is used instead so
+// products.js does not have to join the critical request chain.
+function readInlineProducts() {
+    try {
+        const el = document.getElementById("products-data");
+        if (!el) return null;
+        const parsed = JSON.parse(el.textContent || "[]");
+        return Array.isArray(parsed) ? parsed : null;
+    } catch (e) { return null; }
+}
+const SEARCH_PRODUCTS = (window.PRODUCTS || readInlineProducts() || []).map((product) => ({
     id: product.id,
     name: product.name,
     category: product.category,
@@ -507,8 +660,8 @@ document.addEventListener("click", (event) => {
 
 // =========================
 // ELLE INTRO LOADER (index.html only)
-// White veil -> Elle centre -> El()le slot -> 3 slides ->
-// winner expands to hero, pushing words off-screen.
+// White veil -> Elle centre -> El()le slot opens with the hero image ->
+// slot expands to hero, El exits left and le exits right.
 // Overlay is hidden by default so no-JS shows the hero.
 // =========================
 
@@ -518,6 +671,16 @@ document.addEventListener("click", (event) => {
     if (!overlay || !hero) return;
 
     const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // On slow / small screens finish the intro fast: Lighthouse on Moto G +
+    // Slow 4G reports the intro overlay as the LCP element (~4.6s), so the
+    // hero text must be marked done well before the veil finishes fading.
+    const isCoarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    const isNarrow = window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
+    const saveData = navigator.connection && navigator.connection.saveData === true;
+    const fastIntro = isNarrow || isCoarse || saveData;
+    // The loader plays on every visit (desktop full sequence, mobile fast
+    // sequence); the parse-time bootstrap in index.html already raised the
+    // veil, so there is never a half-painted frame first.
     if (reduceMotion) {
         document.documentElement.classList.add("hero-done");
         return;
@@ -530,29 +693,40 @@ document.addEventListener("click", (event) => {
     overlay.hidden = false;
     root.classList.add("is-intro");
 
-    // Pre-decode slides so the cycle never flashes empty.
+    // Pre-decode the slot image so the box never flashes empty on open.
     if (window.Image) {
         slides.forEach((img) => {
             const probe = new window.Image();
+            probe.decoding = "async";
             probe.src = img.currentSrc || img.src;
         });
-    }
-
-    function showSlide(index) {
-        slides.forEach((img, i) => img.classList.toggle("is-active", i === index));
+        try {
+            const winner = overlay.querySelector("[data-winner-src]");
+            if (winner) {
+                const pre = new window.Image();
+                pre.decoding = "async";
+                pre.src = winner.getAttribute("data-winner-src");
+            }
+        } catch (e) {}
     }
 
     (async () => {
+        if (fastIntro) {
+            await wait(350);                    // 1. Elle appears dead centre
+            root.classList.add("is-slot");      // 2. slot opens -> El()le with hero image
+            await wait(850);                    // 3. hold the image
+            root.classList.add("is-expand");    // 4. expands to hero, words exit sideways
+            await wait(950);                    // wait for full expansion (height transition: 0.9s)
+            root.classList.add("is-leaving", "hero-done"); // 5. reveal hero text BEFORE veil fades
+            await wait(500);
+            overlay.hidden = true;              // 6. remove veil after hero is already visible
+            root.classList.remove("is-intro", "is-slot", "is-expand", "is-leaving");
+            return;
+        }
         await wait(650);                    // 1. Elle appears dead centre
-        root.classList.add("is-slot");      // 2. square box opens -> El()le
-        await wait(750);
-        showSlide(0);                       // 3. slideshow inside the box
-        await wait(500);
-        showSlide(1);
-        await wait(500);
-        showSlide(2);                       // winner is the hero image
-        await wait(600);
-        root.classList.add("is-expand");    // 4. expands, pushing words off-screen
+        root.classList.add("is-slot");      // 2. box opens -> El()le with hero image
+        await wait(1000);                   // 3. hold the image
+        root.classList.add("is-expand");    // 4. expands, El exits left and le exits right
         await wait(950);
         // 5. crossfade the veil instead of cutting: the hero beneath is the
         // same full-viewport frame, so there is no skipped beat. Text rises

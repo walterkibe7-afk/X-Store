@@ -1,0 +1,24 @@
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  const body='<div class="edit-grid"><div><div class="card"><div class="card-h"><h2>Store</h2></div><div class="card-b"><div class="f-row"><div class="f-group"><label class="f-label">Store Name</label><input class="input" id="s-name" value=""></div><div class="f-group"><label class="f-label">Store Email</label><input class="input" id="s-email" value=""></div></div><div class="f-row"><div class="f-group"><label class="f-label">Currency</label><select class="select" id="s-currency"><option>USD</option><option>KES</option></select></div><div class="f-group"><label class="f-label">Shipping Fee</label><input class="input" id="s-ship" value=""></div></div></div></div></div>'
+  +'<div><div class="card"><div class="card-h"><h2>Account</h2></div><div class="card-b"><button class="btn btn-ghost" style="width:100%" id="out">Logout</button></div></div></div></div>';
+  Admin.mount('settings','Settings','Manage store and account preferences.','<button class="btn btn-primary" id="save">Save Changes</button>',body);
+  const data = await Admin.apiFetch('/api/settings');
+  const s = (data && data.settings) || {};
+  document.getElementById('s-name').value = s.store_name || 'Elle';
+  document.getElementById('s-email').value = s.store_email || '';
+  document.getElementById('s-currency').value = s.currency || 'USD';
+  document.getElementById('s-ship').value = s.shipping_fee || '5';
+  document.getElementById('save').onclick = async ()=>{
+    const res = await Admin.apiFetch('/api/settings', { method:'PUT', body: JSON.stringify({
+      store_name: document.getElementById('s-name').value.trim(),
+      store_email: document.getElementById('s-email').value.trim(),
+      currency: document.getElementById('s-currency').value,
+      shipping_fee: document.getElementById('s-ship').value.trim()
+    }) });
+    Admin.toast(res && res.settings ? 'Settings saved' : 'Could not save settings');
+  };
+  document.getElementById('out').onclick=()=>Admin.logout();
+}
+init();

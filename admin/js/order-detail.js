@@ -1,0 +1,56 @@
+let orderId = new URLSearchParams(location.search).get('id') || '';
+let lastStatus = '';
+let lastPayRef = '';
+const STATUSES = ['Pending','Paid','Processing','Shipped','Delivered','Cancelled'];
+function money(n) { return Admin.money(n); }
+function shortDate(iso) { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  if (!orderId) { location.href = 'orders.html'; return; }
+  await load(true);
+  setInterval(load, 10000);
+}
+async function load(first) {
+  const data = await Admin.apiFetch('/api/orders/' + encodeURIComponent(orderId));
+  const o = data && data.order;
+  if (!o) { Admin.toast('Order not found'); setTimeout(()=>location.href='orders.html',900); return; }
+  if (!first && lastStatus && lastStatus !== o.status) {
+    Admin.toast('Order is now ' + o.status);
+  }
+  if (!first && lastStatus === o.status && lastPayRef === (o.payment_reference || '')) {
+    return; // nothing changed — leave the page (and any edits) alone
+  }
+  lastStatus = o.status;
+  lastPayRef = o.payment_reference || '';
+  const items = o.items || [];
+  const payMethod = (o.payment_method || 'card').toLowerCase();
+  const payText = payMethod === 'paybill' ? 'M-Pesa Paybill' : (payMethod === 'stk' || payMethod === 'mobile') ? 'M-Pesa prompt' : 'Card';
+  const body = '<a class="link" href="orders.html">Back to Orders</a>'
+  +'<div class="detail-2" style="margin-top:16px"><div>'
+  +'<div class="card"><div class="card-h"><h2>Order Items</h2><select class="select" style="width:auto" id="st">'
+  + STATUSES.map(s=>'<option'+(s.toLowerCase()===String(o.status).toLowerCase()?' selected':'')+'>'+s+'</option>').join('')
+  +'</select></div><div class="card-b">'
+  +(items.length ? items.map(i=>'<div class="order-item">'+Admin.thumb((i.product_name||'?')[0])+'<div style="flex:1"><strong>'+Admin.esc(i.product_name||'Product')+'</strong><div style="font-size:12px;color:var(--text-2)">Qty '+i.quantity+'</div></div><strong>'+Admin.money(i.price*i.quantity)+'</strong></div>').join('') : '<p style="color:var(--text-2)">No items recorded.</p>')
+  +'<div style="margin-top:12px"><div class="sum-row"><span>Subtotal</span><span>'+money(o.subtotal)+'</span></div><div class="sum-row"><span>Shipping</span><span>'+money(o.shipping)+'</span></div><div class="sum-row total"><span>Total</span><span>'+money(o.total)+'</span></div></div>'
+  +'</div></div></div><div>'
+  +'<div class="card"><div class="card-h"><h2>Payment</h2>'+Admin.pill(o.status||'pending')+'</div><div class="card-b" style="font-size:13px;color:var(--text-2)">'
+  +'<div><strong style="color:var(--text)">'+payText+'</strong></div>'
+  +(o.payment_reference ? '<div style="margin-top:6px">Ref: <strong style="color:var(--text)">'+Admin.esc(o.payment_reference)+'</strong></div>' : '')
+  +(o.paid_at ? '<div style="margin-top:6px">Paid: '+shortDate(o.paid_at)+'</div>' : '<div style="margin-top:6px">Awaiting payment confirmation.</div>')
+  +'</div></div>'
+  +'<div class="card" style="margin-top:16px"><div class="card-h"><h2>Customer</h2></div><div class="card-b"><strong>'+Admin.esc(o.shipping_name||'—')+'</strong><div style="font-size:13px;color:var(--text-2)">'+Admin.esc(o.shipping_email||'')+'<br>'+Admin.esc(o.shipping_phone||'')+'</div></div></div>'
+  +'<div class="card" style="margin-top:16px"><div class="card-h"><h2>Shipping Address</h2></div><div class="card-b" style="font-size:13px;color:var(--text-2)">'+Admin.esc(o.shipping_name||'')+'<br>'+Admin.esc([o.shipping_address,o.shipping_city,o.shipping_country].filter(Boolean).join(', ')||'—')+'<br>Discreet plain packaging</div></div>'
+  +'</div></div>';
+  const keepFocus = !first && document.activeElement && document.activeElement.id === 'st';
+  const keepValue = keepFocus ? document.getElementById('st').value : null;
+  Admin.mount('orders', 'Order ' + (o.number || o.id), shortDate(o.created_at), '<button class="btn btn-primary" id="save">Save Status</button>', body);
+  const sel = document.getElementById('st');
+  if (keepValue) sel.value = keepValue;
+  document.getElementById('save').onclick = async () => {
+    const res = await Admin.apiFetch('/api/orders/' + encodeURIComponent(orderId), { method: 'PUT', body: JSON.stringify({ status: sel.value.toLowerCase() }) });
+    if (res && res.order) { lastStatus = res.order.status; Admin.toast('Order ' + res.order.status); await load(false); }
+    else Admin.toast('Could not save status');
+  };
+}
+init();

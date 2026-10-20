@@ -1,0 +1,26 @@
+let rows = [];
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  const body='<div class="card"><div class="card-b"><div class="toolbar"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="q" placeholder="Search customers..."></div></div><div class="table-wrap"><table class="grid"><thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Joined</th></tr></thead><tbody id="tb"></tbody></table></div><div id="eb"></div></div></div>';
+  Admin.mount('customers','Customers','View and manage your customers.','',body);
+  const data = await Admin.apiFetch('/api/customers?limit=200');
+  rows = (data && data.customers) ? data.customers : [];
+  document.getElementById('q').oninput=render;
+  render();
+}
+function shortDate(iso) { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
+function render(){
+  const tb=document.getElementById('tb'),eb=document.getElementById('eb');
+  const q=(document.getElementById('q').value||'').toLowerCase();
+  let list = rows;
+  if (q) list = list.filter(r=>String(r.first_name||'').toLowerCase().includes(q)||String(r.last_name||'').toLowerCase().includes(q)||String(r.email||'').toLowerCase().includes(q));
+  if(!list.length){tb.innerHTML='';eb.innerHTML='<div class="empty"><div class="empty-ic">@</div><h3>No customers yet</h3><p>Customers will appear here after their first order.</p></div>';return;}
+  eb.innerHTML='';
+  tb.innerHTML=list.map(r=>{
+    const name = ((r.first_name||'')+' '+(r.last_name||'')).trim() || r.email || 'Customer';
+    const orders = Number(r.order_count||0);
+    return '<tr><td><a class="link" href="customer-detail.html?id='+encodeURIComponent(r.id)+'"><strong>'+Admin.esc(name)+'</strong></a></td><td>'+Admin.esc(r.email||'—')+'</td><td>'+orders+' order'+(orders===1?'':'s')+'</td><td>'+Admin.money(r.total_spent)+'</td><td>'+shortDate(r.created_at)+'</td></tr>';
+  }).join('');
+}
+init();

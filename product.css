@@ -94,6 +94,9 @@
 .accordion-content p { margin: 0; color: var(--gray); font-size: 13px; line-height: 1.8; }
 .product-price del { margin-left: 10px; color: var(--gray); font-size: 14px; font-weight: 400; }
 .main-product-image .product-badge.sale { background: var(--black); color: white; }
+/* Stock note: low stock inherits the subtle .stock-note style from style.css;
+   out of stock is called out in red so it is never mistaken for a promotion. */
+.product-stock-note.out-of-stock { color: #e63946; font-weight: 600; }
 @media (max-width: 1000px) {
     .product-main { grid-template-columns: 1fr; gap: 50px; }
     .product-gallery { position: relative; top: auto; }

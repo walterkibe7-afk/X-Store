@@ -1,0 +1,164 @@
+:root {
+  --bg: #08080f;
+  --fg: #f4f4f8;
+  --muted: #9a9ab0;
+  --accent: #6f5cff;
+  --header-h: 72px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* NEVER scroll-behavior: smooth here — Lenis owns scrolling. */
+}
+
+body { overflow-x: hidden; }
+
+.vanta-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Solid fallback under the canvas so the page always looks intentional. */
+  background: radial-gradient(120% 80% at 50% 0%, #17173a 0%, var(--bg) 60%);
+}
+
+.site-header {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4vw;
+  z-index: 10;
+}
+
+.site-header a { color: var(--muted); text-decoration: none; margin-left: 1.5rem; }
+.site-header a:hover { color: var(--fg); }
+.logo { font-weight: 700; letter-spacing: -0.02em; }
+
+main { position: relative; }
+
+/* Hero ---------------------------------------------------------------- */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4vw;
+}
+
+.hero-eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.hero-title {
+  font-size: clamp(3rem, 12vw, 9rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+
+/* Each line is a mask so yPercent hides below the baseline. */
+.hero-title .line { display: block; overflow: hidden; }
+.hero-title .line > span { display: block; will-change: transform; }
+
+.hero-sub {
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 1.125rem;
+  line-height: 1.5;
+  margin: 1.75rem 0;
+}
+
+.hero-cta {
+  align-self: flex-start;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Sections ------------------------------------------------------------ */
+section { padding: 12vh 4vw; }
+section h2 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.03em; }
+.reveal-group p { max-width: 55ch; color: var(--muted); line-height: 1.6; }
+
+.cards {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 3rem;
+}
+
+.card {
+  padding: 1.75rem;
+  border: 1px solid #ffffff1a;
+  border-radius: 16px;
+  background: #ffffff08;
+}
+
+.card h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+/* Pinned horizontal section ------------------------------------------- */
+.h-section { height: 100vh; overflow: hidden; padding: 0; }
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 4vw;
+  height: 100vh;
+  padding: 0 8vw;
+  will-change: transform;
+}
+
+.panel {
+  flex: 0 0 min(40vw, 420px);
+  height: 46vh;
+  border: 1px solid #ffffff1a;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #ffffff12, #ffffff04);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.panel h3 { font-size: 3rem; margin: 0; letter-spacing: -0.04em; }
+.panel p { color: var(--muted); line-height: 1.55; margin: 0.5rem 0 0; }
+
+/* Reading progress ---------------------------------------------------- */
+.progress {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  z-index: 20;
+}
+
+/* Mobile: no pinning — let the browser scroll the strip natively. ----- */
+@media (max-width: 768px) {
+  .h-section { height: auto; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .track { height: auto; padding: 6vh 4vw; transform: none !important; }
+  .panel { flex: 0 0 78vw; height: 40vh; scroll-snap-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress { display: none; }
+}

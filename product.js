@@ -82,19 +82,18 @@
             reviews: p.review_count,
             featured: !!p.featured,
             newest: false,
-            image: imageClass,
+            image: p.image || imageClass,
             description: p.description,
             details: p.details,
             care: '',
-            shipping: ''
+            shipping: '',
+            stock: (typeof p.stock === "number") ? p.stock : null
         };
     }
 
     async function loadProduct() {
         try {
-            console.log("Loading product:", id);
             const res = await fetch("/api/products/" + encodeURIComponent(id));
-            console.log("Response status:", res.status);
             if (!res.ok) {
                 console.warn("API returned", res.status, "- trying local catalogue");
                 const local = (window.PRODUCTS || []).find(p => p.id === id);
@@ -106,7 +105,6 @@
                 return;
             }
             const { product } = await res.json();
-            console.log("Product loaded:", product);
             renderProduct(adaptProduct(product));
         } catch (e) {
             console.warn("API unavailable, trying local catalogue:", e);
@@ -176,6 +174,15 @@
             }
         }
 
+        // Stock state drives the out-of-stock pill, the "Only X left" note, the
+        // Add to Bag / Buy now buttons, and the quantity cap. A missing stock
+        // value (legacy fallback catalogue) is treated as "in stock".
+        var productStock = PRODUCT.stock;
+        var outOfStock = productStock !== null && productStock <= 0;
+        var lowStock = productStock !== null && productStock > 0 && productStock <= 5;
+        var maxInStock = (productStock !== null && productStock > 0) ? productStock : null;
+        applyStockStatus(PRODUCT);
+
         var accordions = [
             [".accordion-description", PRODUCT.description],
             [".accordion-details", PRODUCT.details],
@@ -194,19 +201,39 @@
         const PRODUCT_PRICE = PRODUCT.price;
         let quantity = 1;
 
-        function updateQuantity() {
+         function updateQuantity() {
             if (quantityElement) quantityElement.textContent = quantity;
-            if (addButton) addButton.textContent = "Add to cart - $" + (PRODUCT_PRICE * quantity);
-            if (buyNowButton) buyNowButton.textContent = "Buy now - $" + (PRODUCT_PRICE * quantity);
+            if (addButton) {
+                if (outOfStock) {
+                    addButton.textContent = "Out of stock";
+                    addButton.disabled = true;
+                } else {
+                    addButton.textContent = "Add to cart - $" + (PRODUCT_PRICE * quantity);
+                    addButton.disabled = false;
+                }
+            }
+            if (buyNowButton) {
+                if (outOfStock) {
+                    buyNowButton.disabled = true;
+                } else {
+                    buyNowButton.disabled = false;
+                    buyNowButton.textContent = "Buy now - $" + (PRODUCT_PRICE * quantity);
+                }
+            }
         }
 
+        // Out-of-stock products can never be added to the bag; the click is
+        // a no-op so the buttons above stay in their disabled, "Out of stock"
+        // state instead of briefly showing "Added to cart".
         function commitProductToCart() {
+            if (outOfStock) return;
             CartStore.add(PRODUCT, quantity);
             CartStore.syncBadges();
         }
 
         if (plusButton && minusButton) {
             plusButton.addEventListener("click", function () {
+                if (maxInStock !== null && quantity >= maxInStock) return;
                 quantity++;
                 updateQuantity();
             });
@@ -221,6 +248,7 @@
 
         if (addButton) {
             addButton.addEventListener("click", function () {
+                if (outOfStock) return;
                 commitProductToCart();
                 addButton.textContent = "Added to cart \u2713";
                 setTimeout(updateQuantity, 1500);
@@ -237,6 +265,7 @@
 
         if (buyNowButton) {
             buyNowButton.addEventListener("click", function () {
+                if (outOfStock) return;
                 commitProductToCart();
 
                 if (!isLoggedIn()) {
@@ -296,6 +325,39 @@ applyProductImage(PRODUCT);
             document.querySelectorAll(".thumbnail").forEach(function (thumbnail) {
                 thumbnail.classList.add(PRODUCT.image);
             });
+        }
+    }
+
+    // Stock status note placed beside the description. Out of stock reads as a
+    // red pill; low stock reads as subtle gray text. Both hide when there is
+    // plenty of stock, and both are skipped entirely for the legacy fallback
+    // catalogue (stock === null), so existing data never falsely disables add.
+    function applyStockStatus(PRODUCT) {
+        var anchor = document.querySelector(".product-description");
+        if (!anchor || !anchor.parentNode) return;
+
+        var note = document.querySelector(".product-stock-note");
+        if (!note) {
+            note = document.createElement("p");
+            note.className = "product-stock-note stock-note";
+            note.hidden = true;
+            anchor.parentNode.insertBefore(note, anchor.nextSibling);
+        }
+
+        var stock = PRODUCT.stock;
+        var outOfStock = stock !== null && stock <= 0;
+        var lowStock = stock !== null && stock > 0 && stock <= 5;
+
+        if (outOfStock) {
+            note.textContent = "Out of stock";
+            note.className = "product-stock-note stock-note out-of-stock";
+            note.hidden = false;
+        } else if (lowStock) {
+            note.textContent = "Only " + stock + " left in stock";
+            note.className = "product-stock-note stock-note";
+            note.hidden = false;
+        } else {
+            note.hidden = true;
         }
     }
 

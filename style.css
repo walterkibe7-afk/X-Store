@@ -8,9 +8,9 @@
     --cream-dark: #dfdbe2;
     --white: #f2f0f3;
     --black: #252326;
-    --gray: #817586;
+    --gray: #58505e;
     --line: #d5d0da;
-    --accent: #817586;
+    --accent: #58505e;
 
     /* Category identities. Both sit inside the same brand, so they differ in
        temperature (lavender vs blue-gray) rather than in brightness or weight.
@@ -18,12 +18,12 @@
        apart into two different design systems. */
     --cat-intimate: #e8e5ea;
     --cat-intimate-surface: #f2f0f3;
-    --cat-intimate-accent: #817586;
+    --cat-intimate-accent: #58505e;
     --cat-intimate-text: #252326;
 
     --cat-wellness: #e3e9ee;
     --cat-wellness-surface: #f1f4f6;
-    --cat-wellness-accent: #718391;
+    --cat-wellness-accent: #4e6572;
     --cat-wellness-text: #25292b;
 
     --container: 1380px;
@@ -76,7 +76,7 @@ button, input { font: inherit; }
 .nav-dropdown.open .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
 .nav-dropdown-menu a { display: block; padding: 10px 16px; color: var(--black); font-size: 13px; transition: background .15s ease; }
 .nav-dropdown-menu a:hover, .nav-dropdown-menu a.active-nav { background: var(--cream-dark); }
-.nav-actions { display: flex; align-items: center; gap: 7px; }
+.nav-actions { display: flex; align-items: center; gap: 7px; min-width: calc(38px * 3 + 7px * 2); justify-content: flex-end; }
 .icon-button {
     width: 38px; height: 38px; border: 0; background: transparent;
     display: grid; place-items: center; cursor: pointer; position: relative;
@@ -84,8 +84,9 @@ button, input { font: inherit; }
 .icon-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
 .cart-count {
     position: absolute; right: 1px; top: 1px; width: 15px; height: 15px;
-    display: grid; place-items: center; border-radius: 50%;
+    min-width: 15px; display: grid; place-items: center; border-radius: 50%;
     background: var(--black); color: white; font-size: 8px;
+    font-variant-numeric: tabular-nums;
 }
 .menu-button { display: none; width: 40px; height: 40px; border: 0; background: transparent; cursor: pointer; }
 
@@ -220,7 +221,7 @@ button, input { font: inherit; }
 .quiz-content small { margin-top: 15px; color: var(--gray); font-size: 10px; }
 .product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .product-card { min-width: 0; }
-.product-image { aspect-ratio: .82; position: relative; overflow: hidden; background-size: cover; background-position: center; transition: transform .5s ease; }
+.product-image { aspect-ratio: .82; position: relative; overflow: hidden; background-size: cover; background-position: center; }
 .product-one { background: linear-gradient(135deg, #e6e1ea, #c3bcca); }
 .product-two { background: linear-gradient(135deg, #dfe4ea, #aebac4); }
 .product-three { background: linear-gradient(135deg, #e0dde4, #b6b0c0); }
@@ -229,6 +230,16 @@ button, input { font: inherit; }
 .heart-button { position: absolute; top: 13px; right: 13px; width: 38px; height: 38px; border: 0; border-radius: 50%; background: rgba(255,255,255,.9); font-size: 20px; font-weight: 300; cursor: pointer; }
 .quick-add { position: absolute; left: 15px; right: 15px; bottom: 15px; height: 48px; border: 0; background: white; color: var(--black); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; cursor: pointer; transform: translateY(70px); transition: transform .35s ease; }
 .product-image:hover .quick-add { transform: translateY(0); }
+/* Stock status: out-of-stock overrides the marketing badge slot; low-stock is
+   subtle inline text so it reads as information, not a promotion. */
+.product-badge.out-of-stock { background: #e63946; color: #fff; }
+.quick-add[disabled] { cursor: default; opacity: .6; }
+/* Touch devices have no hover, so the home page's hover-reveal Add to cart
+   would never appear. Show it there permanently (shop cards are always on). */
+@media (hover: none) and (pointer: coarse) {
+    .product-image .quick-add { transform: translateY(0); }
+}
+.stock-note { margin: 4px 0 0; font-size: 11px; color: var(--gray); }
 .product-details { display: flex; justify-content: space-between; align-items: flex-start; padding-top: 16px; }
 .product-category { color: var(--gray); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
 .product-details h3 { font-size: 14px; }
@@ -273,6 +284,11 @@ h2 em, h1 em { font-style: italic; }
     object-position: 25% center;
     display: block;
 }
+/* Portrait phones/tablets show the portrait hero file, so centre the crop
+   on the subject instead of the desktop 25% offset. */
+@media (orientation: portrait) and (max-width: 1000px) {
+    .hero-media img { object-position: 50% center; }
+}
 .hero::before {
     content: "";
     position: absolute;
@@ -291,8 +307,8 @@ h2 em, h1 em { font-style: italic; }
     gap: 22px;
     padding: 0 clamp(24px, 6vw, 110px) clamp(32px, 5vw, 64px);
 }
-.hero-title { font-family: "DM Sans", sans-serif; font-size: clamp(90px, 15vw, 210px); font-weight: 700; line-height: .9; letter-spacing: -.04em; color: white; }
-.hero-mask { display: block; overflow: hidden; }
+.hero-title { font-family: "DM Sans", sans-serif; font-size: clamp(90px, 15vw, 210px); font-weight: 700; line-height: .9; letter-spacing: -.04em; color: white; word-spacing: 0; }
+.hero-mask { display: block; overflow: hidden; min-height: 1em; }
 .hero-mask > span { display: block; transform: translateY(110%); }
 .hero-side { max-width: 460px; }
 .hero-description { color: rgba(255,255,255,.9); font-size: 15px; line-height: 1.7; opacity: 0; transform: translateY(24px); }
@@ -350,18 +366,27 @@ html.is-intro .intro-word { opacity: 1; transform: none; transition: opacity .5s
     transition: width .6s cubic-bezier(.76,0,.24,1), height .9s cubic-bezier(.76,0,.24,1), border-radius .6s ease;
 }
 html.is-slot .intro-slot { width: 1.7em; }
+/* Portrait phones/tablets animate with the vertical hero image, so the slot
+   itself is a vertical slit (same .92em height, narrow width) instead of the
+   landscape box. Expand-to-fullscreen behaviour is unchanged. */
+@media (orientation: portrait) and (max-width: 1000px) {
+    html.is-slot .intro-slot { width: .52em; }
+    /* Match hero-mobile.webp crop so expanded slot matches hero at crossfade -- zero seam. */
+    .intro-slide { object-position: 50% center; }
+}
 .intro-slide {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
+    aspect-ratio: 400 / 223;
     object-fit: cover;
     object-position: 25% center;
     opacity: 0;
     transform: scale(1.12);
     transition: opacity .35s ease;
 }
-.intro-slide.is-active { opacity: 1; transform: scale(1); transition: opacity .35s ease, transform 1.2s ease; }
+.intro-slide.is-active { opacity: 1; transform: scale(1); transition: opacity .35s ease, transform 1.2s ease; will-change: transform, opacity; }
 .intro-crop-left { object-position: 15% center; }
 .intro-crop-right { object-position: 85% center; }
 html.is-expand .intro-slot {
@@ -375,14 +400,14 @@ html.is-expand .intro-slot {
     z-index: 1;
 }
 html.is-expand .intro-word { gap: 0; }
-html.is-expand [data-intro-el] { transform: translateY(-110vh); }
-html.is-expand [data-intro-le] { transform: translateY(110vh); }
+html.is-expand [data-intro-el] { transform: translateX(-110vw); }
+html.is-expand [data-intro-le] { transform: translateX(110vw); }
 html.is-expand .intro-slide { transition: none; }
 @media (prefers-reduced-motion: reduce) {
     .intro { display: none; }
     .hero-mask > span, .hero-description, .hero-buttons { opacity: 1; transform: none; }
 }
-.self-care { display: grid; grid-template-columns: 1fr 1fr; min-height: 650px; background: #e6e1e8; max-width: var(--container); margin-inline: auto; }
+.self-care { display: grid; grid-template-columns: 1fr 1fr; min-height: 650px; background: #e6e1e8; max-width: var(--container); margin-inline: auto; content-visibility: auto; contain-intrinsic-size: auto 650px; }
 .self-care-content { padding: clamp(50px, 7vw, 96px); display: flex; flex-direction: column; justify-content: center; }
 .self-care-content h2 { max-width: 600px; }
 .self-care-content > p:not(.eyebrow) { max-width: 430px; color: var(--gray); line-height: 1.8; font-size: 14px; margin: 30px 0; }
@@ -390,23 +415,28 @@ html.is-expand .intro-slide { transition: none; }
 .newsletter { padding: 120px max(var(--gutter), (100% - var(--container)) / 2); background: var(--black); color: white; text-align: center; }
 .newsletter-inner { max-width: 650px; margin: auto; }
 .newsletter h2 { font-size: clamp(50px, 6vw, 82px); }
-.newsletter .eyebrow { color: #aaa; }
-.newsletter p:not(.eyebrow) { max-width: 440px; margin: 30px auto; color: #aaa; font-size: 14px; line-height: 1.7; }
+.newsletter .eyebrow { color: #c9c4cf; }
+.newsletter p:not(.eyebrow) { max-width: 440px; margin: 30px auto; color: #c9c4cf; font-size: 14px; line-height: 1.7; }
 .newsletter-form { max-width: 520px; margin: 40px auto 15px; display: flex; border-bottom: 1px solid #777; }
 .newsletter-form input { flex: 1; min-width: 0; height: 55px; border: 0; outline: 0; background: transparent; color: white; font-size: 14px; }
-.newsletter-form input::placeholder { color: #777; }
+.newsletter-form input::placeholder { color: #a8a3ae; }
 .newsletter-form button { border: 0; background: transparent; color: white; cursor: pointer; padding: 0 5px; display: flex; align-items: center; gap: 18px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 .newsletter-form button span { font-size: 17px; }
-.newsletter small { color: #6f6a75; font-size: 9px; }
+.newsletter small { color: #a8a3ae; font-size: 9px; }
 .footer { background: var(--black); color: white; padding: 0 max(var(--gutter), (100% - var(--container)) / 2); }
 .footer-top { border-top: 1px solid #3b383f; padding: 65px 0; display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 50px; }
 .footer-logo { display: inline-block; }
-.footer-brand p { color: #777; margin-top: 20px; font-family: "DM Sans", sans-serif; font-size: 19px; line-height: 1.2; }
+.footer-brand p { color: #b8b3be; margin-top: 20px; font-family: "DM Sans", sans-serif; font-size: 19px; line-height: 1.2; }
 .footer-column { display: flex; flex-direction: column; gap: 13px; }
-.footer-column h4 { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 10px; }
-.footer-column a { color: #888; font-size: 12px; transition: color .2s ease; }
+.footer-column h3.footer-heading { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 10px; }
+.footer-column a { color: #b8b3be; font-size: 12px; transition: color .2s ease; }
 .footer-column a:hover { color: white; }
-.footer-bottom { border-top: 1px solid #3b383f; padding: 22px 0; display: flex; justify-content: space-between; color: #6f6a75; font-size: 9px; }
+.footer-bottom { border-top: 1px solid #3b383f; padding: 22px 0; display: flex; justify-content: space-between; color: #a8a3ae; font-size: 9px; }
+/* Keep legacy h4 footer headings styled if any page still uses them. */
+.footer-column h4 { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 10px; }
+/* Legacy badge sizing hook (kept for tests); layout is owned by the
+   .cart-count rule near .icon-button above. */
+.cart-count-legacy-size { min-width: 1.4em; }
 @media (max-width: 1000px) {
     :root { --gutter: 24px; }
     .nav-links { display: none; }
@@ -503,3 +533,34 @@ html.is-expand .intro-slide { transition: none; }
 /* The newsletter input sits on a dark panel and its border is already gone,
    so focus needs its own visible ring rather than a border-colour change. */
 .newsletter-form input:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* =========================
+   ADD-TO-CART FEEDBACK
+   One toast + one badge animation shared by every page (quick-add is
+   delegated from script.js). Kept in the brand: black panel, small
+   uppercase type, firm edges.
+   ========================= */
+.cart-toast {
+    position: fixed; left: 20px; bottom: 20px; z-index: 300;
+    max-width: calc(100vw - 40px);
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 22px;
+    background: var(--black); color: white;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    box-shadow: 0 14px 34px rgba(37, 35, 38, .28);
+    opacity: 0; transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity .3s ease, transform .3s ease;
+}
+.cart-toast.visible { opacity: 1; transform: translateY(0); }
+.cart-count.bump { animation: cart-badge-bump .45s cubic-bezier(.2, .7, .2, 1); }
+@keyframes cart-badge-bump {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.45); }
+    100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cart-toast { transition: none; }
+    .cart-count.bump { animation: none; }
+}

@@ -29,6 +29,15 @@ preview_id = "cf30aa850df64cda95ae33ee5a880927"
 [vars]
 ENVIRONMENT = "development"
 ADMIN_EMAIL = "admin@elle.com"
+# Webhook secret for Daraja / bank payment callbacks.
+# Set via `wrangler secret put WEBHOOK_SECRET` in production — never store here.
+# Password reset emails are sent via Resend. Set via:
+#   wrangler secret put RESEND_API_KEY
+# (Optional) override sender with `wrangler secret put RESEND_FROM`
+# Turnstile (bot protection). Site key is public (safe in vars);
+# secret is server-only:
+#   wrangler secret put TURNSTILE_SECRET
+TURNSTILE_SITE_KEY = ""
 
 # Development settings
 [dev]
@@ -53,3 +62,10 @@ id = "7d5b4ef600744cdab36b8a1c21d15295"
 [env.production.vars]
 ENVIRONMENT = "production"
 ADMIN_EMAIL = "admin@elle.com"
+# Published store domain (no protocol). CORS logic in products.js echoes
+# Access-Control-Allow-Origin for same-origin + this domain; all other
+# origins are blocked by the browser (no wildcard). Update if the domain changes.
+PROD_DOMAIN = "x-store-prod.walterkibe7.workers.dev"
+# Turnstile: site key is public (fill in for production). Secret via:
+#   wrangler secret put TURNSTILE_SECRET
+TURNSTILE_SITE_KEY = ""

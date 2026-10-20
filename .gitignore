@@ -2,6 +2,9 @@
 *.rar
 *.zip
 *.tar.gz
+*.7z
+*.gz
+*.tgz
 
 # OS files
 .DS_Store
@@ -18,6 +21,8 @@ node_modules/
 
 # Logs
 *.log
+_dev.*
+_start_dev.bat
 
 # Build output / deploy staging
 dist/
@@ -25,10 +30,25 @@ dist/
 
 # Debug / probe artefacts (never ship)
 *.bin
+*_output.json
 _curlv.txt
 headers_*.txt
 body_*.bin
 _body_*.bin
 test_*.json
-_start_dev.bat
 _echo_srv.py
+
+# Temporary / scratch files
+temp.txt
+temp_*.txt
+*.tmp
+*.bak
+*.orig
+*_~
+*.swp
+
+# Python bytecode caches
+__pycache__/
+
+# QA screenshots (regenerated on demand)
+_tools/_shots/

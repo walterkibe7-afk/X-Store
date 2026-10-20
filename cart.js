@@ -236,4 +236,9 @@ if (promo && promoToggle) {
     });
 }
 
+// Re-render the bag when the cart changes in another tab (the shared
+// CartStore dispatches "cart:updated" on cross-tab localStorage writes, so an
+// open cart stays in step without a reload).
+window.addEventListener("cart:updated", renderCart);
+
 renderCart();

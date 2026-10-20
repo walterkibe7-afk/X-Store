@@ -1,0 +1,73 @@
+async function init() {
+  const ok = await Admin.requireAuth();
+  if (!ok) return;
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const isEdit = !!id;
+  const title = isEdit ? 'Edit Product' : 'Add Product';
+  const body = '<a class="link" href="products.html">Back to Products</a><div class="edit-grid" style="margin-top:16px">'
+  +'<div class="card"><div class="card-h"><h2>Product Information</h2></div><div class="card-b">'
+  +'<div class="f-group"><label class="f-label">Product Name</label><input class="input" id="f-name" value=""></div>'
+  +'<div class="f-row"><div class="f-group"><label class="f-label">Category</label><select class="select" id="f-cat"><option>Intimate</option><option>Wellness</option></select></div>'
+  +'<div class="f-group"><label class="f-label">Subcategory</label><select class="select" id="f-sub"></select></div></div>'
+  +'<div class="f-row"><div class="f-group"><label class="f-label">Price (KSh)</label><input class="input" id="f-price" value="" placeholder="KSh"></div>'
+  +'<div class="f-group"><label class="f-label">Compare-at Price (KSh)</label><input class="input" id="f-compare" placeholder="KSh"></div></div>'
+  +'<div class="f-group"><label class="f-label">Badge</label><select class="select" id="f-badge"><option value="">No badge</option><option>BEST SELLER</option><option>NEW</option><option>SALE</option></select></div>'
+  +'<div class="f-group"><label class="f-label">Description</label><textarea class="input" rows="4" id="f-desc"></textarea></div>'
+  +'<div class="f-group"><label class="f-label">Status</label><select class="select" id="f-active"><option value="1">Active</option><option value="0">Inactive</option></select></div>'
+  +'<div class="f-group"><label class="f-label">Stock (units)</label><input class="input" id="f-stock" value="1000" type="number" min="0"></div>'
+  +'</div></div>'
+  +'<div class="card"><div class="card-h"><h2>Product Images</h2></div><div class="card-b"><div class="img-slots">'
+  +['Hero','Lifestyle','Detail'].map(s=>'<div class="img-slot"><div><small>'+s+'</small><div style="font-size:12px;color:var(--text-2)">Neutral placeholder</div></div></div>').join('')
+  +'</div><p class="hint">Image uploads are not wired yet — storefronts use neutral gradient placeholders.</p><div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end"><a class="btn btn-secondary" href="products.html">Cancel</a><button class="btn btn-primary" id="save">Save Changes</button></div></div></div></div>';
+  Admin.mount('products', title, isEdit ? 'Update product details and catalogue status.' : 'Add a new product to your catalogue.', '<button class="btn btn-primary" id="saveTop">Save Changes</button>', body);
+  const fillSub = () => { const c=document.getElementById('f-cat').value; document.getElementById('f-sub').innerHTML = (Admin.TAXONOMY[c]||[]).map(s=>'<option>'+s+'</option>').join(''); };
+  document.getElementById('f-cat').onchange = fillSub;
+  const money = v => (v === null || v === undefined || v === '') ? '' : String(v);
+  // Strip KSh prefix / commas / spaces but keep a single decimal point.
+  const unmoney = v => { const cleaned = String(v||'').replace(/[^0-9.]/g,''); if (!cleaned) return null; const n = parseFloat(cleaned); return isNaN(n) ? null : n; };
+  if (isEdit) {
+    const data = await Admin.apiFetch('/api/products/'+encodeURIComponent(id));
+    const p = data && data.product;
+    if (!p) { Admin.toast('Product not found'); setTimeout(()=>location.href='products.html',900); return; }
+    document.getElementById('f-name').value = p.name || '';
+    document.getElementById('f-cat').value = p.category || 'Intimate';
+    fillSub();
+    document.getElementById('f-sub').value = p.subcategory || '';
+    document.getElementById('f-price').value = money(p.price);
+    document.getElementById('f-compare').value = money(p.compare_price);
+    document.getElementById('f-badge').value = p.badge || '';
+    document.getElementById('f-desc').value = p.description || '';
+    document.getElementById('f-active').value = p.active ? '1' : '0';
+    document.getElementById('f-stock').value = p.stock != null ? p.stock : 1000;
+  } else fillSub();
+  async function save() {
+    const name = document.getElementById('f-name').value.trim();
+    const price = unmoney(document.getElementById('f-price').value);
+    if (!name || price === null) { Admin.toast('Name and price are required'); return; }
+    const payload = {
+      name: name,
+      category: document.getElementById('f-cat').value,
+      subcategory: document.getElementById('f-sub').value,
+      price: price,
+      compare_price: unmoney(document.getElementById('f-compare').value),
+      badge: document.getElementById('f-badge').value || null,
+      description: document.getElementById('f-desc').value.trim() || null,
+      active: document.getElementById('f-active').value === '1' ? 1 : 0,
+      stock: parseInt(document.getElementById('f-stock').value, 10) || 0
+    };
+    let res = null;
+    if (isEdit) {
+      res = await Admin.apiFetch('/api/products/'+encodeURIComponent(id), { method:'PUT', body: JSON.stringify(payload) });
+      if (res && res.product) { Admin.toast('Product saved'); setTimeout(()=>location.href='products.html',700); }
+      else Admin.toast('Could not save product');
+    } else {
+      payload.slug = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      res = await Admin.apiFetch('/api/products', { method:'POST', body: JSON.stringify(payload) });
+      if (res && res.product) { Admin.toast('Product created'); setTimeout(()=>location.href='products.html',700); }
+      else Admin.toast((res && res.error) || 'Could not create product');
+    }
+  }
+  document.getElementById('save').onclick = save; document.getElementById('saveTop').onclick = save;
+}
+init();

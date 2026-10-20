@@ -1,11 +1,6 @@
 /* Elle Admin core — taxonomy enforced, API-driven with localStorage fallback. */
 const Admin = (() => {
   const TAXONOMY = { Intimate: ['Toys','Lubricants'], Wellness: ['Body & Massage','Gummies','Self-Care'] };
-  const MOCK_PRODUCTS = [
-    { id:'silk-touch', name:'Silk Touch', category:'Intimate', subcategory:'Toys', price:59, active:1, badge:'BEST SELLER', updated:'Oct 7' },
-    { id:'after-dark-oil', name:'After Dark Oil', category:'Wellness', subcategory:'Body & Massage', price:28, active:1, badge:'', updated:'Oct 6' },
-    { id:'midnight-gummies', name:'Midnight Gummies', category:'Wellness', subcategory:'Gummies', price:24, active:1, badge:'NEW', updated:'Oct 5' }
-  ];
   
   async function apiFetch(path, options = {}) {
     // Admin reads must never serve stale prices: bust the browser HTTP cache
@@ -70,6 +65,6 @@ const Admin = (() => {
   function badgeTag(b){ return b ? '<span class="badge-tag">'+esc(b)+'</span>' : '<span style="color:var(--text-2)">—</span>'; }
   function thumb(label){ return '<div class="thumb">'+esc(label||'Elle')+'</div>'; }
   function money(n){ const v = Math.round(Number(n) || 0); return 'KSh ' + v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
-  return { TAXONOMY, MOCK_PRODUCTS, mount, toast, esc, pill, badgeTag, thumb, money, requireAuth, apiFetch, logout };
+  return { TAXONOMY, mount, toast, esc, pill, badgeTag, thumb, money, requireAuth, apiFetch, logout };
 })();
 window.Admin = Admin;

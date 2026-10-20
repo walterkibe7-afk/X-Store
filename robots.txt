@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Sitemap: https://x-store-prod.walterkibe7.workers.dev/sitemap.xml

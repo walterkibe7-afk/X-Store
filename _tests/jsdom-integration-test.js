@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { JSDOM, VirtualConsole } = require("jsdom");
 
-const SITE = path.join(__dirname, "..", "X-store");
+const SITE = path.join(__dirname, "..");
 const ORIGIN = "http://xstore.local/";
 
 const results = [];
@@ -340,13 +340,13 @@ p.doc.getElementById("confirmPassword").value = "longenough";
     // A successful signup means a customer who has accepted the terms.
     p.doc.getElementById("terms").checked = true;
     submitForm(p.win, form);
+    await sleep(900);
     check("signup.html: success message shown", msg.classList.contains("success"), msg.textContent);
-        const stored = JSON.parse(p.win.localStorage.getItem("xUser"));
-        check("signup.html: account persisted", stored.email === "amina@example.com" && stored.firstName === "Amina", JSON.stringify(stored));
-        check("signup.html: session flag set", p.win.localStorage.getItem("xLoggedIn") === "true");
-        await sleep(900);
-        check("signup.html: lands on account.html", p.lastNav() === "account.html", p.lastNav());
-        p.dom.window.close();
+    const stored = JSON.parse(p.win.localStorage.getItem("xUser"));
+    check("signup.html: account persisted", stored.email === "amina@example.com" && stored.firstName === "Amina", JSON.stringify(stored));
+    check("signup.html: session flag set", p.win.localStorage.getItem("xLoggedIn") === "true");
+    check("signup.html: lands on account.html", p.lastNav() === "account.html", p.lastNav());
+    p.dom.window.close();
     }
 
     // ---------- 5. signup.html when arriving from cart (checkout intent) ----------

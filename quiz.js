@@ -23,6 +23,7 @@ const results = document.querySelector(".quiz-results");
 const restartButton = document.querySelector("#restart-quiz");
 const saveResults = document.querySelector("#save-results");
 const quizEmail = document.querySelector("#quiz-email");
+const quizAnnouncement = document.querySelector("#quiz-announcement");
 
 let CATALOGUE = [];
 
@@ -201,6 +202,9 @@ function updateQuiz() {
     const active = document.querySelector('[data-question="' + currentQuestion + '"]');
     if (active) active.classList.add("active");
     if (questionNumber) questionNumber.textContent = currentQuestion;
+    // Live region: announce each step so screen-reader users follow progress
+    // without the focus having to chase the visual counter.
+    if (quizAnnouncement) quizAnnouncement.textContent = "Question " + currentQuestion + " of " + totalQuestions;
     const percent = Math.round((currentQuestion / totalQuestions) * 100);
     if (progressPercent) progressPercent.textContent = percent + "%";
     if (progressBar) progressBar.style.width = percent + "%";

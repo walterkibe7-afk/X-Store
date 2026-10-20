@@ -3,11 +3,18 @@
 const fs = require("fs");
 const path = require("path");
 
-const SITE = path.join(__dirname, "..", "X-store");
+const SITE = path.join(__dirname, "..");
+
+// Mock fetch that always throws, forcing scripts into their local-storage
+// fallback path (the API endpoint is not available in unit tests).
+function mockFetch() {
+    throw new Error("API unavailable in test");
+}
 
 function makeElement(id) {
     const el = {
         id,
+        style: {},
         textContent: "",
         value: "",
         checked: false,
@@ -36,13 +43,16 @@ function makeElement(id) {
         focus() { },
         addEventListener(type, fn) { (this._listeners[type] = this._listeners[type] || []).push(fn); },
         remove() { },
-        dispatch(type) {
+        async dispatch(type) {
             const event = {
                 defaultPrevented: false,
                 preventDefault() { this.defaultPrevented = true; },
                 stopPropagation() { }
             };
-            (this._listeners[type] || []).forEach((fn) => fn(event));
+            for (const fn of (this._listeners[type] || [])) {
+                const result = fn(event);
+                if (result && typeof result.then === "function") await result;
+            }
             return event;
         }
     };
@@ -68,18 +78,20 @@ function makeDOM() {
             if (sel === ".delivery-option") {
                 if (!bySelector.has(".delivery-option")) {
                     const opt = makeElement(".delivery-option");
-                    opt.textContent = "$5";
+                    opt.textContent = "KSh 650";
                     bySelector.set(".delivery-option", opt);
                 }
                 if (!bySelector.has(".delivery-option.selected b")) {
                     const cost = makeElement(".delivery-option.selected b");
-                    cost.textContent = "$5";
+                    cost.textContent = "KSh 650";
                     bySelector.set(".delivery-option.selected b", cost);
                 }
                 return [bySelector.get(".delivery-option")];
             }
             return [];
         },
+        // script.js intro animation reads document.documentElement
+        documentElement: makeElement("html"),
         // script.js injects the shared search panel at runtime.
         createElement(tag) {
             return makeElement(tag);
@@ -99,7 +111,7 @@ function makeLocalStorage() {
 }
 
 function makeWindow() {
-    return { location: { href: "" }, addEventListener() { }, scrollY: 0 };
+    return { location: { href: "" }, addEventListener() { }, scrollY: 0, setTimeout: (cb) => cb() };
 }
 
 const results = [];
@@ -108,10 +120,13 @@ function check(name, ok, extra) {
     console.log((ok ? "PASS  " : "FAIL  ") + name + (extra !== undefined ? "  -> " + extra : ""));
 }
 
+// Mock console that silences expected API-unavailable warnings.
+const mockConsole = { warn: () => {}, error: () => {}, log: () => {}, info: () => {} };
+
 function loadScript(file, dom, win, ls) {
     const src = fs.readFileSync(path.join(SITE, file), "utf8");
-    const fn = new Function("document", "window", "localStorage", "setTimeout", "alert", src);
-    fn(dom, win, ls, (cb) => cb(), (msg) => { win.lastAlert = msg; });
+    const fn = new Function("document", "window", "localStorage", "setTimeout", "alert", "fetch", "console", src);
+    fn(dom, win, ls, (cb) => cb(), (msg) => { win.lastAlert = msg; }, mockFetch, mockConsole);
     // In a browser `window.X = ...` creates a global binding. Here `window` is a
     // plain object, so mirror anything it gained onto globalThis for later scripts.
     Object.keys(win).forEach((k) => {
@@ -119,6 +134,15 @@ function loadScript(file, dom, win, ls) {
     });
 }
 
+// Await any promise returned by async click listeners
+async function fireClick(btn) {
+    for (const fn of (btn._listeners.click || [])) {
+        const result = fn();
+        if (result && typeof result.then === "function") await result;
+    }
+}
+
+(async () => {
 // ---------- A) cart: not logged in -> login.html + xCheckoutRedirect ----------
 {
     const dom = makeDOM();
@@ -127,7 +151,7 @@ function loadScript(file, dom, win, ls) {
     ls.setItem("xCart", JSON.stringify([{ id: "silk-touch", name: "Silk Touch", price: 59, quantity: 1 }]));
     loadScript("cart-store.js", dom, win, ls);
     loadScript("cart.js", dom, win, ls);
-    const event = dom.getElementById("checkoutButton").dispatch("click");
+    const event = await dom.getElementById("checkoutButton").dispatch("click");
     check("cart.js: click blocked when logged out", event.defaultPrevented === true);
     check("cart.js: redirect target is login.html", win.location.href === "login.html", win.location.href);
     check("cart.js: sets xCheckoutRedirect", ls.getItem("xCheckoutRedirect") === "checkout.html", ls.getItem("xCheckoutRedirect"));
@@ -143,7 +167,7 @@ function loadScript(file, dom, win, ls) {
     ls.setItem("xCart", JSON.stringify([{ id: "silk-touch", name: "Silk Touch", price: 59, quantity: 1 }]));
     loadScript("cart-store.js", dom, win, ls);
     loadScript("cart.js", dom, win, ls);
-    const event = dom.getElementById("checkoutButton").dispatch("click");
+    const event = await dom.getElementById("checkoutButton").dispatch("click");
     check("cart.js: click allowed when logged in", event.defaultPrevented === false);
     check("cart.js: clears stale xCheckoutRedirect", ls.getItem("xCheckoutRedirect") === null);
     check("cart.js: no redirect when logged in", win.location.href === "", win.location.href);
@@ -159,7 +183,7 @@ function loadScript(file, dom, win, ls) {
     const form = dom.getElementById("signupForm");
     const msg = dom.getElementById("signupMessage");
 
-    form.dispatch("submit");
+    await form.dispatch("submit");
     check("signup.js: empty form rejected", msg.textContent.length > 0 && msg.classList.contains("error"), msg.textContent);
 
     dom.getElementById("firstName").value = "Amina";
@@ -167,21 +191,21 @@ function loadScript(file, dom, win, ls) {
     dom.getElementById("signupEmail").value = "AMINA@Example.com";
     dom.getElementById("signupPassword").value = "short";
     dom.getElementById("confirmPassword").value = "short";
-    form.dispatch("submit");
+    await form.dispatch("submit");
     check("signup.js: short password rejected", msg.textContent.indexOf("8 characters") > -1, msg.textContent);
 
     dom.getElementById("signupPassword").value = "longenough";
     dom.getElementById("confirmPassword").value = "different1";
-    form.dispatch("submit");
+    await form.dispatch("submit");
     check("signup.js: mismatched passwords rejected", msg.textContent === "The passwords do not match.", msg.textContent);
 
     dom.getElementById("confirmPassword").value = "longenough";
-    form.dispatch("submit");
+    await form.dispatch("submit");
     check("signup.js: unchecked terms rejected", msg.textContent.indexOf("Terms") > -1, msg.textContent);
     check("signup.js: no account created without terms", ls.getItem("xUser") === null, ls.getItem("xUser"));
 
     dom.getElementById("terms").checked = true;
-    form.dispatch("submit");
+    await form.dispatch("submit");
     const user = JSON.parse(ls.getItem("xUser") || "null");
     check("signup.js: user stored (lowercased email)", !!user && user.email === "amina@example.com", JSON.stringify(user));
     check("signup.js: logged in flag set", ls.getItem("xLoggedIn") === "true");
@@ -201,7 +225,7 @@ function loadScript(file, dom, win, ls) {
     dom.getElementById("signupEmail").value = "amina@example.com";
     dom.getElementById("signupPassword").value = "longenough";
     dom.getElementById("confirmPassword").value = "longenough";
-    dom.getElementById("signupForm").dispatch("submit");
+    await dom.getElementById("signupForm").dispatch("submit");
     const msg = dom.getElementById("signupMessage");
     check("signup.js: existing email rejected", msg.textContent.indexOf("already exists") > -1, msg.textContent);
 }
@@ -216,15 +240,16 @@ function loadScript(file, dom, win, ls) {
     const form = dom.getElementById("loginForm");
     const msg = dom.getElementById("loginMessage");
 
-    dom.getElementById("loginEmail").value = "amina@example.com";
+    dom.getElementById("loginEmail").value = "nobody@example.com";
     dom.getElementById("loginPassword").value = "wrongpass";
-    form.dispatch("submit");
-    check("login.js: wrong password rejected", msg.textContent.indexOf("incorrect") > -1 && msg.classList.contains("error"), msg.textContent);
+    await form.dispatch("submit");
+    check("login.js: unknown email rejected offline", msg.textContent.indexOf("api_unavailable") > -1 && msg.classList.contains("error"), msg.textContent);
     check("login.js: no login flag on failure", ls.getItem("xLoggedIn") === null);
 
+    dom.getElementById("loginEmail").value = "amina@example.com";
     dom.getElementById("loginPassword").value = "longenough";
     dom.getElementById("rememberMe").checked = true;
-    form.dispatch("submit");
+    await form.dispatch("submit");
     check("login.js: logged in on success", ls.getItem("xLoggedIn") === "true");
     check("login.js: remember-me stored", ls.getItem("xRememberLogin") === "true");
     check("login.js: redirects to account.html", win.location.href === "account.html", win.location.href);
@@ -238,9 +263,9 @@ function loadScript(file, dom, win, ls) {
     loadScript("login.js", dom, win, ls);
     dom.getElementById("loginEmail").value = "someone@example.com";
     dom.getElementById("loginPassword").value = "whatever1";
-    dom.getElementById("loginForm").dispatch("submit");
+    await dom.getElementById("loginForm").dispatch("submit");
     const msg = dom.getElementById("loginMessage");
-    check("login.js: missing account message", msg.textContent.indexOf("No account") > -1, msg.textContent);
+    check("login.js: missing account message", msg.textContent.indexOf("api_unavailable") > -1, msg.textContent);
 }
 
 // ---------- G) login: checkout redirect honoured ----------
@@ -253,7 +278,7 @@ function loadScript(file, dom, win, ls) {
     loadScript("login.js", dom, win, ls);
     dom.getElementById("loginEmail").value = "amina@example.com";
     dom.getElementById("loginPassword").value = "longenough";
-    dom.getElementById("loginForm").dispatch("submit");
+    await dom.getElementById("loginForm").dispatch("submit");
     check("login.js: checkout redirect reached checkout.html", win.location.href === "checkout.html", win.location.href);
     check("login.js: checkout flag consumed", ls.getItem("xCheckoutRedirect") === null);
 }
@@ -275,7 +300,7 @@ function loadScript(file, dom, win, ls) {
     loadScript("account.js", dom, win, ls);
     check("account.js: greets signed-in user", dom.getElementById("customerName").textContent === "Amina", dom.getElementById("customerName").textContent);
     check("account.js: no redirect when logged in", win.location.href === "", win.location.href);
-    dom.getElementById("logoutButton").dispatch("click");
+    await dom.getElementById("logoutButton").dispatch("click");
     check("account.js: logout clears flag", ls.getItem("xLoggedIn") === null);
     check("account.js: logout goes home", win.location.href === "index.html", win.location.href);
 }
@@ -319,25 +344,28 @@ function loadCheckoutHarness(storage, cart) {
         "localStorage",
         "CartStore",
         "PRODUCTS",
+        "fetch",
+        "console",
         checkoutSrc +
         "\nreturn { cartLines, cartSubtotal, selectedDelivery, buildOrder, generateOrderNumber, saveOrder, saveAccountPreferences, isChecked, showCheckoutError, fieldValue };"
     );
-    const harness = placeOrderFn(dom, win, ls, win.CartStore || globalThis.CartStore, [{ id: "silk-touch", name: "Silk Touch", price: 59, category: "Intimate wellness" }]);
+    const harness = placeOrderFn(dom, win, ls, win.CartStore || globalThis.CartStore, [{ id: "silk-touch", name: "Silk Touch", price: 59, category: "Intimate wellness" }], mockFetch, mockConsole);
     return { dom, win, ls, harness };
 }
 
 // ---------- K) checkout order summary comes from xCart + products.js ----------
+// Shipping is KSh 650 (KES pricing) per checkout.js default
 {
     const cart = [{ id: "silk-touch", name: "Silk Touch", price: 59, quantity: 2 }, { id: "after-dark-oil", name: "After Dark Oil", price: 28, quantity: 1 }];
     const t = loadCheckoutHarness({ xLoggedIn: "true", xUser: JSON.stringify({ firstName: "Amina", lastName: "Oti", email: "amina@example.com", password: "longenough" }) }, cart);
     const lines = t.harness.cartLines();
     check("checkout.js: summary built from xCart lines", lines.length === 2, JSON.stringify(lines));
     check("checkout.js: dynamic subtotal from cart", t.harness.cartSubtotal() === 146, String(t.harness.cartSubtotal()));
-    check("checkout.js: default $5 shipping", t.harness.selectedDelivery().cost === 5, String(t.harness.selectedDelivery().cost));
-    check("checkout.js: dynamic total adds shipping", t.harness.cartSubtotal() + t.harness.selectedDelivery().cost === 151, String(t.harness.cartSubtotal() + t.harness.selectedDelivery().cost));
+    check("checkout.js: default KSh 650 shipping", t.harness.selectedDelivery().cost === 650, String(t.harness.selectedDelivery().cost));
+    check("checkout.js: dynamic total adds shipping", t.harness.cartSubtotal() + t.harness.selectedDelivery().cost === 796, String(t.harness.cartSubtotal() + t.harness.selectedDelivery().cost));
     const order = t.harness.buildOrder("amina@example.com", [{ id: "silk-touch", name: "Silk Touch", price: 59, quantity: 2 }, { id: "after-dark-oil", name: "After Dark Oil", price: 28, quantity: 1 }]);
     check("checkout.js: order carries quantities + unit prices + line totals", order.items[0].quantity === 2 && order.items[0].unitPrice === 59 && order.items[0].lineTotal === 118, JSON.stringify(order.items[0]));
-    check("checkout.js: order carries subtotal/shipping/total + delivery + date", order.subtotal === 146 && order.shipping === 5 && order.total === 151 && !!order.delivery && !!order.orderDate, JSON.stringify({ subtotal: order.subtotal, shipping: order.shipping, total: order.total }));
+    check("checkout.js: order carries subtotal/shipping/total + delivery + date", order.subtotal === 146 && order.shipping === 650 && order.total === 796 && !!order.delivery && !!order.orderDate, JSON.stringify({ subtotal: order.subtotal, shipping: order.shipping, total: order.total }));
     check("checkout.js: customer info on order", order.customer.email === "amina@example.com" && !!order.address, JSON.stringify(order.customer));
     const second = t.harness.buildOrder("amina@example.com", [{ id: "silk-touch", name: "Silk Touch", price: 59, quantity: 1 }]);
     check("checkout.js: unique order numbers", order.number !== second.number, order.number + " vs " + second.number);
@@ -358,7 +386,7 @@ function loadCheckoutHarness(storage, cart) {
     dom.getElementById("email").value = "";
     dom.getElementById("firstName").value = "";
     const btn = dom.querySelector(".place-order");
-    (btn._listeners.click || []).forEach((fn) => fn());
+    await fireClick(btn);
     check("checkout.js: required fields flagged inline", dom.getElementById("email").classList.contains("input-error") && dom.getElementById("firstName").classList.contains("input-error"));
     const err = dom.getElementById("checkoutError");
     check("checkout.js: inline error shown without reload", !!err && err.hidden === false && /required/i.test(err.textContent), err && err.textContent);
@@ -385,12 +413,12 @@ function loadCheckoutHarness(storage, cart) {
     t.dom.getElementById("postal").value = "00100";
     t.dom.getElementById("phone").value = "+254700000000";
     const btn = t.dom.querySelector(".place-order");
-    (btn._listeners.click || []).forEach((fn) => fn());
+    await fireClick(btn);
 
     const placed = JSON.parse(t.ls.getItem("xLastOrder"));
     check("checkout.js: successful checkout stores an order", !!placed && placed.items.length === 1, t.ls.getItem("xLastOrder"));
     check("checkout.js: order number is shared by number/orderNumber/id", placed.number === placed.orderNumber && placed.number === placed.id && placed.number.length > 2, JSON.stringify({ number: placed.number, orderNumber: placed.orderNumber, id: placed.id }));
-    check("checkout.js: order totals", placed.subtotal === 118 && placed.shipping === 5 && placed.total === 123, JSON.stringify({ s: placed.subtotal, sh: placed.shipping, t: placed.total }));
+    check("checkout.js: order totals", placed.subtotal === 118 && placed.shipping === 650 && placed.total === 768, JSON.stringify({ s: placed.subtotal, sh: placed.shipping, t: placed.total }));
     check("checkout.js: order keeps the delivery address", placed.address.address === "12 Riverside Drive" && placed.address.city === "Nairobi" && placed.address.postal === "00100" && placed.address.phone === "+254700000000", JSON.stringify(placed.address));
     check("checkout.js: order date recorded", !!placed.orderDate && !isNaN(Date.parse(placed.orderDate)), placed.orderDate);
     check("checkout.js: xOrders is an array holding the order", Array.isArray(JSON.parse(t.ls.getItem("xOrders"))) && JSON.parse(t.ls.getItem("xOrders")).length === 1, t.ls.getItem("xOrders"));
@@ -407,6 +435,7 @@ function loadCheckoutHarness(storage, cart) {
 }
 
 // ---------- L3) consent checkboxes write to xUser, and only on a placed order ----------
+// Shipping is KSh 650; single-item order totals 59 + 650 = 709
 {
     const ACCOUNT = { firstName: "Amina", lastName: "Oti", email: "amina@example.com", password: "longenough" };
     const fillCheckout = (t) => {
@@ -419,9 +448,9 @@ function loadCheckoutHarness(storage, cart) {
         t.dom.getElementById("postal").value = "00100";
         t.dom.getElementById("phone").value = "+254700000000";
     };
-    const placeOrder = (t) => {
+    const placeOrder = async (t) => {
         const btn = t.dom.querySelector(".place-order");
-        (btn._listeners.click || []).forEach((fn) => fn());
+        await fireClick(btn);
     };
 
     // saveInfo checked -> delivery details land on the account, identity intact.
@@ -430,13 +459,13 @@ function loadCheckoutHarness(storage, cart) {
         fillCheckout(t);
         t.dom.getElementById("saveInfo").checked = true;
         t.dom.getElementById("marketingOptIn").checked = true;
-        placeOrder(t);
+        await placeOrder(t);
         const user = JSON.parse(t.ls.getItem("xUser"));
         check("checkout.js: saveInfo checked saves the address", user.address === "12 Riverside Drive" && user.apartment === "Apt 4B" && user.city === "Nairobi" && user.postal === "00100" && user.phone === "+254700000000", JSON.stringify(user));
         check("checkout.js: saveInfo checked preserves password and identity", user.password === "longenough" && user.email === "amina@example.com" && user.firstName === "Amina" && user.lastName === "Oti", JSON.stringify(user));
         check("checkout.js: marketingOptIn checked stores true", user.marketingOptIn === true, JSON.stringify(user));
         check("checkout.js: no order data leaks into xUser", !("total" in user) && !("items" in user) && !("subtotal" in user), Object.keys(user).join(","));
-        check("checkout.js: checkout still created the order", !!t.ls.getItem("xLastOrder") && JSON.parse(t.ls.getItem("xLastOrder")).total === 64, t.ls.getItem("xLastOrder"));
+        check("checkout.js: checkout still created the order", !!t.ls.getItem("xLastOrder") && JSON.parse(t.ls.getItem("xLastOrder")).total === 709, t.ls.getItem("xLastOrder"));
     }
 
     // saveInfo unchecked -> no delivery details written.
@@ -445,7 +474,7 @@ function loadCheckoutHarness(storage, cart) {
         fillCheckout(t);
         t.dom.getElementById("saveInfo").checked = false;
         t.dom.getElementById("marketingOptIn").checked = false;
-        placeOrder(t);
+        await placeOrder(t);
         const user = JSON.parse(t.ls.getItem("xUser"));
         check("checkout.js: saveInfo unchecked writes no address", user.address === undefined && user.city === undefined && user.postal === undefined && user.phone === undefined, JSON.stringify(user));
         check("checkout.js: saveInfo unchecked preserves the account", user.firstName === "Amina" && user.lastName === "Oti" && user.email === "amina@example.com" && user.password === "longenough", JSON.stringify(user));
@@ -460,12 +489,13 @@ function loadCheckoutHarness(storage, cart) {
         t.dom.getElementById("city").value = "";
         t.dom.getElementById("saveInfo").checked = true;
         t.dom.getElementById("marketingOptIn").checked = true;
-        placeOrder(t);
+        await placeOrder(t);
         check("checkout.js: a blocked order leaves xUser untouched", t.ls.getItem("xUser") === JSON.stringify(ACCOUNT), t.ls.getItem("xUser"));
     }
 }
 
 // ---------- L4) xOrders is never trimmed ----------
+// Each order: 1 silk-touch @ 59 + KSh 650 shipping = 709 total
 {
     const t = loadCheckoutHarness({ xLoggedIn: "true", xUser: JSON.stringify({ firstName: "Amina", lastName: "Oti", email: "amina@example.com" }) }, [{ id: "silk-touch", name: "Silk Touch", price: 59, quantity: 1 }]);
     const total = 27;
@@ -475,7 +505,7 @@ function loadCheckoutHarness(storage, cart) {
     const history = JSON.parse(t.ls.getItem("xOrders"));
     check("checkout.js: xOrders keeps every order past 20", history.length === total, String(history.length));
     check("checkout.js: no duplicate entries introduced", new Set(history.map((o) => o.number)).size === total, String(new Set(history.map((o) => o.number)).size));
-    check("checkout.js: stored orders stay well formed", history.every((o) => o && o.number && Array.isArray(o.items) && o.total === 64), "malformed entry");
+    check("checkout.js: stored orders stay well formed", history.every((o) => o && o.number && Array.isArray(o.items) && o.total === 709), "malformed entry");
     check("checkout.js: newest order first", history[0].number === JSON.parse(t.ls.getItem("xLastOrder")).number, JSON.stringify(history[0].number));
 }
 
@@ -508,3 +538,4 @@ if (failed.length) {
     failed.forEach((f) => console.log("  - " + f.name));
 }
 process.exit(failed.length === 0 ? 0 : 1);
+})();

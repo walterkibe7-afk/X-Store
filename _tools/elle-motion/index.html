@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Elle — Motion Story (Lenis + GSAP)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<style>
+/* v3 — every scene is FULL-BLEED dark (photo / ink / gradient). There is no
+   cream void to reveal mid-transition, so no blank-white frames can exist.
+   Only text the VO literally speaks appears; every element is word-locked in
+   story.js against faster-whisper measured timestamps. */
+:root { --cream:#e8e5ea; --ink:#141216; --deep:#17151a; --gray:#9a93a3; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--ink); color: var(--cream);
+  font-family: "DM Sans", system-ui, sans-serif; }
+body { overflow: hidden; height: 100svh; }
+.viewport { position: fixed; inset: 0; overflow: hidden; }
+.reel { position: absolute; top: 0; left: 0; right: 0; will-change: transform; }
+.scene { height: 100svh; width: 100%; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; }
+.progress { position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 50;
+  background: var(--cream); transform: scaleX(0); transform-origin: left center; opacity: .9; }
+
+/* Full-bleed background layers — 100% coverage on every scene, always. */
+.bg { position: absolute; inset: 0; z-index: 0; }
+.bg img { width: 100%; height: 100%; object-fit: cover; }
+.bg-photo::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(20,18,22,.25), rgba(20,18,22,.85)); }
+.bg-ink { background: var(--deep); }
+.bg-slate { background: linear-gradient(160deg, #24333c, #141216 75%); }
+.bg-end { background: radial-gradient(120% 90% at 50% 30%, #22202a, #141216 70%); }
+
+/* Non-text ambience: blurred colour orbs so no scene window is ever a flat
+   void (the dark equivalent of the old blank pages). Not text → the
+   word-lock rule doesn't apply; orbs drift slowly and deterministically. */
+.orbs { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .55; will-change: transform; }
+.orb.o1 { width: 68vmax; height: 68vmax; left: -24vmax; top: -22vmax; }
+.orb.o2 { width: 60vmax; height: 60vmax; right: -22vmax; bottom: -24vmax; }
+#problem .o1 { background: #6b2434; } #problem .o2 { background: #5a4520; }
+#guide   .o1 { background: #155a68; } #guide   .o2 { background: #24386b; }
+#match   .o1 { background: #215c37; } #match   .o2 { background: #452761; }
+#cta     .o1 { background: #412f60; } #cta     .o2 { background: #14374a; }
+
+/* Heavily blurred, darkened real UI screenshot as background texture —
+   gives guide/match scenes depth while the crisp phone pops on its word. */
+.shotbg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.shotbg img { width: 100%; height: 100%; object-fit: cover;
+  filter: blur(48px) saturate(.7); transform: scale(1.18); opacity: .32; }
+.shotbg::after { content: ""; position: absolute; inset: 0;
+  background: rgba(20,18,22,.62); }
+
+.content { position: relative; z-index: 1; width: 100%; max-width: 640px;
+  padding: 0 7vw; }
+
+/* Hero */
+.hero .content { max-width: 720px; }
+.hero-title { font-size: clamp(48px, 11vw, 128px); font-weight: 700;
+  line-height: .94; letter-spacing: -.04em; margin: 0 0 20px; color: #fff; }
+.hero-title .line { display: block; overflow: hidden; }
+.hero-title .line > span { display: block; }
+.hero-line { font-size: clamp(16px, 2.6vw, 22px); line-height: 1.55; margin: 0 0 10px;
+  color: #fff; opacity: .92; max-width: 470px; }
+
+/* Shared scene type */
+h2.headline { font-size: clamp(40px, 8vw, 88px); letter-spacing: -.03em;
+  line-height: .98; margin: 0 0 14px; color: #fff; font-weight: 700; }
+p.line { font-size: clamp(16px, 2.6vw, 22px); line-height: 1.5; margin: 0 0 10px;
+  color: var(--cream); opacity: .92; max-width: 480px; }
+
+/* Problem cards — the spoken phrases themselves, no subtext. */
+.cards { display: grid; gap: 12px; margin-top: 18px; max-width: 460px; }
+.card { background: rgba(255,255,255,.06); border: 1px solid rgba(232,229,234,.16);
+  border-radius: 16px; padding: 16px 20px; font-size: clamp(17px, 3vw, 22px);
+  font-weight: 600; color: #fff; }
+
+/* Word chips */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.chip { background: rgba(255,255,255,.08); border: 1px solid rgba(232,229,234,.18);
+  border-radius: 999px; padding: 10px 18px; font-size: clamp(14px, 2.4vw, 17px);
+  font-weight: 500; color: #fff; }
+
+/* Phone (real UI screenshots) */
+.phone { width: min(300px, 62vw); margin: 22px auto 0; border-radius: 30px;
+  overflow: hidden; border: 8px solid #0c0b0e;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5); background: #fff; }
+.phone img { display: block; width: 100%; }
+
+/* Endcard */
+.end .content { text-align: center; max-width: 620px; }
+.end-logo { font-size: clamp(72px, 15vw, 170px); font-weight: 700;
+  letter-spacing: -.04em; line-height: 1; margin: 0 0 18px; color: #fff; }
+.end p.line { margin: 0 auto 10px; max-width: 480px; }
+.cta-pill { display: inline-block; background: var(--cream); color: var(--ink);
+  border-radius: 999px; padding: 16px 40px; font-weight: 600; font-size: 17px;
+  margin-top: 18px; }
+
+/* Landscape (16:9): keep everything inside 1080p. */
+@media (orientation: landscape) {
+  .content { max-width: 1100px; padding: 0 8vw; }
+  .hero .content { max-width: 1200px; }
+  .phone { width: fit-content; margin: 18px auto 0; }
+  .phone img { height: min(44vh, 400px); width: auto; }
+  .cards { max-width: 520px; margin-left: 0; margin-right: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .progress { display: none; } }
+</style>
+</head>
+<body>
+<div class="viewport">
+  <div class="reel" id="reel">
+
+    <!-- 1 hook: "Not sure where to start? You're not alone. Intimate wellness…" -->
+    <section class="scene hero" id="hook">
+      <div class="bg bg-photo"><img src="hero-mobile.webp" alt=""></div>
+      <div class="content">
+        <h1 class="hero-title">
+          <span class="line"><span id="t-l1">Not sure</span></span>
+          <span class="line"><span id="t-l2">where to start?</span></span>
+        </h1>
+        <p class="hero-line" id="t-s1">You're not alone.</p>
+        <p class="hero-line" id="t-s2">Intimate wellness should feel personal, not overwhelming.</p>
+      </div>
+    </section>
+
+    <!-- 2 problem: "Too many choices, awkward packaging, and guesswork…" + "So Elle guides you." -->
+    <section class="scene" id="problem">
+      <div class="bg bg-ink"></div>
+      <div class="orbs"><span class="orb o1"></span><span class="orb o2"></span></div>
+      <div class="content">
+        <div class="cards">
+          <div class="card" id="p-c1">Too many choices</div>
+          <div class="card" id="p-c2">Awkward packaging</div>
+          <div class="card" id="p-c3">Guesswork</div>
+        </div>
+        <h2 class="headline" id="p-pivot" style="margin-top:30px;font-size:clamp(30px,6vw,64px)">So Elle guides you.</h2>
+      </div>
+    </section>
+
+    <!-- 3 guide: "Answer five quick questions about your vibe, your focus, and what matters…" -->
+    <section class="scene" id="guide">
+      <div class="bg bg-slate"></div>
+      <div class="shotbg"><img src="ui-quiz-mobile.png" alt=""></div>
+      <div class="orbs"><span class="orb o1"></span><span class="orb o2"></span></div>
+      <div class="content">
+        <h2 class="headline" id="g-h">Five quick<br>questions.</h2>
+        <div class="phone" id="g-phone"><img src="ui-quiz-mobile.png" alt="Elle quiz"></div>
+        <div class="chips">
+          <span class="chip" id="g-w1">Your vibe,</span>
+          <span class="chip" id="g-w2">your focus,</span>
+          <span class="chip" id="g-w3">what matters</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 match: "We match you to what fits, no guesswork. Everything arrives…" -->
+    <section class="scene" id="match">
+      <div class="bg bg-ink"></div>
+      <div class="shotbg"><img src="ui-home-mobile.png" alt=""></div>
+      <div class="orbs"><span class="orb o1"></span><span class="orb o2"></span></div>
+      <div class="content">
+        <h2 class="headline" id="m-h">Matched.</h2>
+        <p class="line" id="m-l1">No guesswork.</p>
+        <p class="line" id="m-l2">Everything arrives in plain, discreet packaging,</p>
+        <div class="phone" id="m-phone"><img src="ui-home-mobile.png" alt="Elle shop"></div>
+        <div class="chips">
+          <span class="chip" id="m-w1">Secure checkout</span>
+          <span class="chip" id="m-w2">Real support.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 end: "Take the Elle Match quiz, find what feels right, and feel good, your way." -->
+    <section class="scene end" id="cta">
+      <div class="bg bg-end"></div>
+      <div class="orbs"><span class="orb o1"></span><span class="orb o2"></span></div>
+      <div class="content">
+        <div class="end-logo" id="e-logo">Elle</div>
+        <p class="line" id="e-l1">Take the Elle Match quiz,</p>
+        <p class="line" id="e-l2">find what feels right,</p>
+        <p class="line" id="e-l3">feel good — your way.</p>
+        <div><span class="cta-pill" id="e-btn">Take the quiz</span></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+<div class="progress" aria-hidden="true"></div>
+<script type="module" src="./story.js"></script>
+</body>
+</html>

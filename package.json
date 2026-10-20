@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
-    "dev": "npx serve x-store"
+    "dev": "npx wrangler dev",
+    "dev:static": "npx serve ."
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "serve": "^14.2.0"
   }
 }
