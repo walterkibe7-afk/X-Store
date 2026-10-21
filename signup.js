@@ -14,6 +14,33 @@ window.turnstileToken = "";
 window.onTurnstileSuccess = function(token) {
     window.turnstileToken = token;
 };
+// Demo mode: the script loads render=explicit, so nothing auto-scans. When
+// a real site key is injected server-side, signup.js on this page renders
+// the widget manually (see the loader below); an empty/placeholder key stays
+// hidden instead of erroring against a blank key.
+document.querySelectorAll(".cf-turnstile").forEach(function (widget) {
+    const siteKey = widget.getAttribute("data-sitekey") || "";
+    if (!siteKey || siteKey.indexOf("__") === 0) {
+        widget.style.display = "none";
+    }
+});
+function initSignupTurnstile() {
+    const widget = document.querySelector(".cf-turnstile");
+    if (!widget) return;
+    const siteKey = widget.getAttribute("data-sitekey") || "";
+    if (!siteKey || siteKey.indexOf("__") === 0) return; // stays hidden
+    const tryRender = function (attempts) {
+        const api = (typeof window !== "undefined" && window.turnstile) || null;
+        if (!api || typeof api.render !== "function") {
+            if (attempts > 50) return;
+            return setTimeout(function () { tryRender(attempts + 1); }, 150);
+        }
+        widget.innerHTML = "";
+        api.render(widget, { sitekey: siteKey, callback: window.onTurnstileSuccess });
+    };
+    tryRender(0);
+}
+initSignupTurnstile();
 
 function showSignupMessage(text, type) {
     if (!signupMessage) return;

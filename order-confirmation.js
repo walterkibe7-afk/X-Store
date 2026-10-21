@@ -44,6 +44,12 @@ function formatKES(value) {
     return "KSh " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+// Whole-shilling KES formatting, matching checkout.js (this page used to
+// print raw "$" amounts even though every displayable price is KES).
+function currency(value) {
+    return formatKES(value);
+}
+
 // One row per product line: product, quantity, unit price and line total.
 function buildItem(item) {
     const price = Number(item.price) || 0;
@@ -57,9 +63,9 @@ function buildItem(item) {
         "<div class=\"order-item-info\">" +
         "<strong>" + (item.name || item.product || "Product") + "</strong>" +
         category +
-        '<span class="order-item-qty">Qty ' + quantity + " × $" + unitPrice + "</span>" +
+        '<span class="order-item-qty">Qty ' + quantity + " × " + currency(unitPrice) + "</span>" +
         "</div>" +
-        '<b class="order-item-price">$' + lineTotal + "</b>" +
+        '<b class="order-item-price">' + currency(lineTotal) + "</b>" +
         "</div>"
     );
 }
@@ -133,11 +139,30 @@ function renderConfirmation() {
 
     if (orderItemsEl) orderItemsEl.innerHTML = order.items.map(buildItem).join("");
 
-    // Paybill orders are confirmed asynchronously (bank callback or manual
-    // review), so say "received, awaiting payment" instead of "confirmed".
+    // Honest payment wording per method. Only the M-Pesa prompt flow has a
+    // server-side confirmation loop; Paybill is confirmed by the bank
+    // callback; the card flow is a demonstration that processes nothing.
     const payMethod = order.payment && order.payment.method;
     const payRef = order.payment && order.payment.reference;
-    if (payMethod === "paybill") {
+    const payStatus = order.payment && order.payment.status;
+    const isDemoCard = payMethod === "card" || (order.payment && order.payment.simulated === true);
+    if (payMethod === "mobile" && payStatus !== "paid") {
+        setText(document.getElementById("confirmation-title"), "ORDER RECEIVED");
+        const intro = document.querySelector(".preparing-msg");
+        if (intro) {
+            intro.textContent = "We received your order and are still waiting for M-Pesa to confirm your payment" +
+                (payRef ? " (prompt " + payRef + ")" : "") +
+                ". If you paid, it will confirm shortly — your order ships as soon as it clears.";
+        }
+    } else if (isDemoCard) {
+        setText(document.getElementById("confirmation-title"), "ORDER RECEIVED");
+        const icon = document.querySelector(".confirmation-icon");
+        if (icon) icon.hidden = true;
+        const intro = document.querySelector(".preparing-msg");
+        if (intro) {
+            intro.textContent = "We received your order. This submission used the card checkout demonstration — no payment was processed and nothing was charged. We will confirm the order and payment arrangement by email before anything ships.";
+        }
+    } else if (payMethod === "paybill") {
         setText(document.getElementById("confirmation-title"), "ORDER RECEIVED");
         const intro = document.querySelector(".preparing-msg");
         if (intro) {
@@ -151,7 +176,7 @@ function renderConfirmation() {
         ? order.subtotal
         : order.items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
     const shipping = typeof order.shippingCost === "number" ? order.shippingCost :
-        (typeof order.shipping === "number" ? order.shipping : 5);
+        (typeof order.shipping === "number" ? order.shipping : 0);
     const total = typeof order.total === "number" ? order.total : subtotal + shipping;
 
     setText(subtotalEl, formatKES(subtotal));

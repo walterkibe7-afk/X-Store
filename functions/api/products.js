@@ -124,7 +124,7 @@ async function serveAsset(request, env) {
         "X-XSS-Protection": "1; mode=block",
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-GN17Af5JTCgsTuG7anjYPflH/7ifBbNYYalLV2mGIwU=' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: https://lh3.googleusercontent.com; connect-src 'self' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; frame-src 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-GN17Af5JTCgsTuG7anjYPflH/7ifBbNYYalLV2mGIwU=' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: https://lh3.googleusercontent.com; connect-src 'self' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     };
     if (isProduction) {
         securityHeaders["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
@@ -238,7 +238,7 @@ export default {
             "X-XSS-Protection": "1; mode=block",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-GN17Af5JTCgsTuG7anjYPflH/7ifBbNYYalLV2mGIwU=' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: https://lh3.googleusercontent.com; connect-src 'self' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; frame-src 'self' https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self' 'sha256-GN17Af5JTCgsTuG7anjYPflH/7ifBbNYYalLV2mGIwU=' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: https://lh3.googleusercontent.com; connect-src 'self' https://fonts.googleapis.com https://accounts.google.com https://challenges.cloudflare.com; frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
         };
         if (isProduction) {
             securityHeaders["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";

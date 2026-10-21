@@ -95,21 +95,28 @@ window.onTurnstileSuccess = function(token) {
     }
 })();
 
-const deliveryOptions = document.querySelectorAll(".delivery-option");
+// Single client-side source for delivery options. The amounts deliberately
+// mirror the server's own pricing rule (createPendingOrder in products.js:
+// express -> 1550, otherwise 650) and the server re-prices every order from
+// its own rule, so a mismatch here can never change what an order costs.
+const DELIVERY_OPTIONS = [
+    { name: "Standard delivery", window: "3-7 business days", cost: 650 },
+    { name: "Express delivery", window: "1-3 business days", cost: 1550 }
+];
+const MAX_QTY = 99;
+const deliveryOptionsWrap = document.getElementById("deliveryOptions");
 const paymentMethods = document.querySelectorAll(".payment-method");
 const paymentFields = document.querySelector(".payment-fields");
 const mobileMoneyFields = document.querySelector(".mobile-money-fields");
+const paybillFieldsEl = document.querySelector(".paybill-fields");
 const summaryEl = document.querySelector(".checkout-summary");
-const subtotalEl = document.querySelector(".summary-line strong");
-const shippingEl = document.querySelector(".shipping-line strong");
-const totalEl = document.querySelector(".checkout-total strong");
+const summaryItemsEl = document.getElementById("summaryItems");
+const subtotalEl = document.getElementById("summarySubtotal");
+const shippingEl = document.getElementById("summaryShipping");
+const totalEl = document.getElementById("summaryTotal");
+const emptyBagEl = document.getElementById("emptyBag");
+const checkoutLayoutEl = document.querySelector(".checkout-container");
 const placeOrderButton = document.querySelector(".place-order");
-
-function parsePrice(text) {
-    if (!text) return 0;
-    const n = parseFloat(text.replace(/[^0-9.]/g, ""));
-    return isNaN(n) ? 0 : n;
-}
 
 // Whole-shilling KES formatting used across the storefront.
 function formatKES(value) {
@@ -165,75 +172,335 @@ function escapeHTML(value) {
         .replace(/"/g, "&quot;");
 }
 
-function renderSummary() {
-    if (!summaryEl) return;
-    const lines = cartLines().map(function (line) {
-        const product = line && line.id ? productById(line.id) : null;
-        if (!product) return line;
-        const merged = Object.assign({}, line);
-        if (!merged.name && product.name) merged.name = product.name;
-        if ((merged.price === null || merged.price === undefined || merged.price === "" || isNaN(Number(merged.price))) && product.price !== null && product.price !== undefined) {
-            merged.price = Number(product.price);
+// =========================
+// FIELD VALIDATION — inline, country-aware
+// The checkout serves several countries, so postal codes and phone numbers
+// follow the selected country. "Other" deliberately gets the loosest rules:
+// required-but-format-free, because address conventions vary widely.
+// =========================
+const COUNTRIES_CONFIG = {
+    "Kenya": {
+        phonePlaceholder: "+254 7XX XXX XXX",
+        phoneTest: function (value) { return /^(?:\+?254|0)?[17]\d{7,8}$/.test(String(value).replace(/[\s-]/g, "")); },
+        postalLabel: "ZIP / Postcode",
+        postalTest: function (value) { return /^\d{5}$/.test(String(value).trim()); }
+    },
+    "United States": {
+        phonePlaceholder: "+1 (555) 555-0142",
+        phoneTest: function (value) { return /^(\+?1[\s.(-]*)?(\([2-9]\d{2}\)|[2-9]\d{2})[\s.)-]*\d{3}[\s.-]*\d{4}$/.test(String(value)); },
+        postalLabel: "ZIP code",
+        postalTest: function (value) { return /^\d{5}(?:-\d{4})?$/.test(String(value).trim()); }
+    },
+    "United Kingdom": {
+        phonePlaceholder: "+44 7400 123456",
+        phoneTest: function (value) { return /^(\+?44|0)[\d\s-]{8,12}$/.test(String(value)); },
+        postalLabel: "Postcode",
+        postalTest: function (value) { return /^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(String(value).trim()); }
+    },
+    "Canada": {
+        phonePlaceholder: "(416) 555-0142",
+        phoneTest: function (value) { return /^(\+?1[\s.(-]*)?(\([2-9]\d{2}\)|[2-9]\d{2})[\s.)-]*\d{3}[\s.-]*\d{4}$/.test(String(value)); },
+        postalLabel: "Postal code",
+        postalTest: function (value) { return /^[A-Za-z]\d[A-Za-z][\s-]?\d[A-Za-z]\d$/.test(String(value).trim()); }
+    },
+    "Australia": {
+        phonePlaceholder: "+61 411 555 014",
+        phoneTest: function (value) { return /^(\+?61|0)[\d\s-]{8,10}$/.test(String(value)); },
+        postalLabel: "Postcode",
+        postalTest: function (value) { return /^\d{4}$/.test(String(value).trim()); }
+    },
+    "Other": {
+        phonePlaceholder: "Phone number",
+        phoneTest: null, // format-free: required, len >= 8 digits
+        postalLabel: "ZIP / Postcode",
+        postalTest: null
+    }
+};
+
+function countryConfig() {
+    const countryEl = document.getElementById("country");
+    const name = countryEl ? countryEl.value : "Kenya";
+    return COUNTRIES_CONFIG[name] || COUNTRIES_CONFIG["Other"];
+}
+
+// Country drives the postal label and phone example, so a Kenyan, UK or US
+// customer each sees the fields behave like their own format.
+function applyCountryBehavior() {
+    const config = countryConfig();
+    const postalInput = document.getElementById("postal");
+    const postalLabel = document.querySelector("label[for='postal']");
+    const phoneInput = document.getElementById("phone");
+    if (postalInput && !postalInput.value) {
+        postalInput.setAttribute("placeholder", config.postalLabel);
+    }
+    if (postalLabel && postalLabel.childNodes && postalLabel.childNodes[0]) {
+        postalLabel.childNodes[0].nodeValue = config.postalLabel + " *";
+    }
+    if (phoneInput && !phoneInput.value) {
+        phoneInput.setAttribute("placeholder", config.phonePlaceholder);
+    }
+    clearFieldError(postalInput);
+    clearFieldError(phoneInput);
+}
+
+function fieldErrorMessage(input) {
+    const id = input ? input.id : "";
+    const value = String((input && input.value) || "").trim();
+    if (!value) {
+        const labels = {
+            email: "Enter your email address — we send updates to it.",
+            firstName: "Enter your first name.",
+            lastName: "Enter your last name.",
+            address: "Enter your street address.",
+            city: "Enter your city.",
+            postal: "Enter your " + countryConfig().postalLabel.toLowerCase() + ".",
+            phone: "Enter a phone number for delivery questions."
+        };
+        return labels[id] || "This field is required.";
+    }
+    if (id === "email") return "That email does not look right. Check for typos.";
+    if (id === "postal") return "That postal code does not match the selected country.";
+    if (id === "phone") return "That phone number does not match the selected country.";
+    return "Please check this field.";
+}
+
+function validateFieldValue(input) {
+    const value = String((input && input.value) || "").trim();
+    if (!value) return false;
+    if (input.id === "email") return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (input.id === "postal") {
+        const test = countryConfig().postalTest;
+        return test ? test(value) : value.length >= 3;
+    }
+    if (input.id === "phone") {
+        const test = countryConfig().phoneTest;
+        return test ? test(value) : value.replace(/\D/g, "").length >= 8;
+    }
+    return true;
+}
+
+function showFieldError(input, message) {
+    if (!input) return;
+    let errorEl = document.getElementById("err-" + input.id);
+    if (!errorEl && input.parentNode) {
+        errorEl = document.createElement("small");
+        errorEl.className = "field-error";
+        errorEl.id = "err-" + input.id;
+        input.parentNode.appendChild(errorEl);
+    }
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+    }
+    input.classList.add("input-error");
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", "err-" + input.id);
+}
+
+function clearFieldError(input) {
+    if (!input) return;
+    const errorEl = document.getElementById("err-" + input.id);
+    if (errorEl) errorEl.hidden = true;
+    input.classList.remove("input-error");
+    input.removeAttribute("aria-invalid");
+    input.removeAttribute("aria-describedby");
+}
+
+const REQUIRED_FIELD_IDS = ["email", "firstName", "lastName", "address", "city", "postal", "phone"];
+// Typing rebuilds trust: clear a field's error as the customer fixes it.
+REQUIRED_FIELD_IDS.forEach(function (id) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener("input", function () {
+        if (input.value.trim() && validateFieldValue(input)) clearFieldError(input);
+    });
+    input.addEventListener("blur", function () {
+        if (input.classList.contains("input-error")) {
+            showFieldError(input, fieldErrorMessage(input));
         }
-        if (!merged.category && product.category) merged.category = product.category;
-        return merged;
     });
-    const existing = summaryEl.querySelectorAll(".checkout-product");
-    existing.forEach(function (node, index) {
-        if (index > 0 && node.parentNode) node.parentNode.removeChild(node);
+});
+const countryEl = document.getElementById("country");
+if (countryEl) countryEl.addEventListener("change", applyCountryBehavior);
+applyCountryBehavior();
+
+// Validation runs once on submit and reports ALL problems, not just the first.
+function validateCheckoutForm() {
+    let firstInvalid = null;
+    let message = "";
+    REQUIRED_FIELD_IDS.forEach(function (id) {
+        const input = document.getElementById(id);
+        if (!input) return;
+        if (validateFieldValue(input)) {
+            clearFieldError(input);
+            return;
+        }
+        const msg = fieldErrorMessage(input);
+        showFieldError(input, msg);
+        if (!firstInvalid) {
+            firstInvalid = input;
+            message = msg;
+        }
     });
-    let first = summaryEl.querySelector(".checkout-product");
-    lines.forEach(function (line, index) {
+    if (firstInvalid) {
+        showCheckoutError("Please review your details — " + message);
+        if (typeof firstInvalid.focus === "function") firstInvalid.focus();
+        if (typeof firstInvalid.scrollIntoView === "function") {
+            firstInvalid.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
+        return false;
+    }
+    return true;
+}
+
+// Trust chain for summary pricing: line prices come from the cart, but if a
+// stored line has a missing/invalid price we overlay the static catalog
+// price. The server re-prices the order from D1 no matter what is sent.
+function cartLineDisplay(line) {
+    const product = line && line.id ? productById(line.id) : null;
+    const merged = Object.assign({}, line);
+    if (!merged.name && product && product.name) merged.name = product.name;
+    const linePrice = Number(line && line.price);
+    if (!isFinite(linePrice) && product) merged.price = Number(product.price);
+    if (!merged.category && product && product.category) merged.category = product.category;
+    return merged;
+}
+
+// Steppers + remove let the customer edit the bag without leaving checkout;
+// every change funnels through CartStore (same source cart.html uses).
+function wireSummaryEditors(container) {
+    if (!container) return;
+    container.addEventListener("click", function (event) {
+        const actionEl = event.target.closest ? event.target.closest("[data-act]") : null;
+        if (!actionEl || typeof CartStore === "undefined") return;
+        const row = actionEl.closest(".checkout-product");
+        const id = row ? row.getAttribute("data-id") : "";
+        if (!id) return;
+        const action = actionEl.getAttribute("data-act");
+        const line = cartLines().find(function (l) { return l && l.id === id; });
+        if (!line) return;
         const qty = Number(line.quantity) || 0;
+        if (action === "inc") CartStore.setQuantity(id, Math.min(MAX_QTY, qty + 1));
+        else if (action === "dec") CartStore.setQuantity(id, qty - 1); // <=0 removes
+        else if (action === "remove") CartStore.remove(id);
+        recomputeCheckout();
+    });
+}
+
+function renderSummary() {
+    if (!summaryEl || !summaryItemsEl) return;
+    const lines = cartLines().map(cartLineDisplay);
+    const html = lines.map(function (line) {
+        const qty = Math.max(0, Math.min(MAX_QTY, Number(line.quantity) || 0));
         const price = Number(line.price) || 0;
         const name = escapeHTML(line.name || "Product");
         const category = escapeHTML(line.category || "");
-        const html =
-            '<div class="checkout-product">' +
+        const isOne = qty === 1;
+        return '<div class="checkout-product" data-id="' + escapeHTML(line.id || "") + '">' +
             '<div class="checkout-product-image"><span>' + qty + '</span></div>' +
             '<div class="checkout-product-info"><strong>' + name + '</strong>' +
             (category ? '<span>' + category + '</span>' : '') +
-            '<span>' + formatKES(price) + ' each &times; ' + qty + '</span></div>' +
-            '<b>' + formatKES(price * qty) + '</b>' +
+            '<div class="cp-line">' +
+            '<span class="cp-stepper">' +
+            '<button type="button" data-act="dec" aria-label="' + (isOne ? 'Remove ' + name : 'Decrease quantity of ' + name) + '">&minus;</button>' +
+            '<b aria-label="Quantity">' + qty + '</b>' +
+            '<button type="button" data-act="inc" aria-label="Increase quantity of ' + name + '">+</button>' +
+            '</span>' +
+            '<button type="button" data-act="remove" class="cp-remove">Remove</button>' +
+            '</div>' +
+            '</div>' +
+            '<b class="cp-price">' + formatKES(price * qty) + '</b>' +
             '</div>';
-        if (index === 0 && first) {
-            first.outerHTML = html;
-            first = summaryEl.querySelector(".checkout-product");
-        } else {
-            const wrapper = document.createElement("div");
-            wrapper.innerHTML = html;
-            const node = wrapper.firstChild;
-            const anchor = summaryEl.querySelector(".summary-line");
-            if (node && anchor && anchor.parentNode) anchor.parentNode.insertBefore(node, anchor);
-            else if (node) summaryEl.appendChild(node);
-        }
-    });
-    if (!lines.length && first && first.parentNode) first.parentNode.removeChild(first);
+    }).join("");
+    summaryItemsEl.innerHTML = html;
+    wireSummaryEditors(summaryItemsEl);
+    // Nothing is ever hard-coded: a genuinely empty cart leaves "no products"
+    // rather than a stale or demonstration line.
+    if (!lines.length && summaryItemsEl) {
+        summaryItemsEl.innerHTML = '<p class="summary-empty">Your bag is empty.</p>';
+    }
+}
+
+// One recalculation path: re-render rows, recompute shipping from the
+// constants above and rewrite every total from trusted prices.
+function computeTotals() {
+    const selectedRadio = (deliveryOptionsWrap && deliveryOptionsWrap.querySelector("input[name='delivery']:checked")) || null;
+    let option = DELIVERY_OPTIONS[0];
+    const name = selectedRadio ? selectedRadio.getAttribute("data-name") : "";
+    const match = DELIVERY_OPTIONS.find(function (opt) { return opt.name === name; });
+    if (match) option = match;
+    const subtotal = cartSubtotal();
+    if (subtotalEl) subtotalEl.textContent = formatKES(subtotal);
+    if (shippingEl) shippingEl.textContent = formatKES(option.cost);
+    if (totalEl) totalEl.textContent = formatKES(subtotal + option.cost);
+}
+
+let lastEmptyState = null;
+// A genuinely empty cart never gets silently populated. Instead the order
+// form is replaced with the designed empty-bag state.
+function syncEmptyState() {
+    const empty = cartLines().length === 0;
+    if (empty === lastEmptyState) return;
+    lastEmptyState = empty;
+    if (emptyBagEl) emptyBagEl.hidden = !empty;
+    if (checkoutLayoutEl) checkoutLayoutEl.hidden = empty;
 }
 
 function updateTotal() {
+    syncEmptyState();
     renderSummary();
-    const selected = document.querySelector(".delivery-option.selected b");
-    const shipping = selected ? parsePrice(selected.textContent) : 650;
-    if (shippingEl) shippingEl.textContent = formatKES(shipping);
-    if (subtotalEl && subtotalEl !== shippingEl) subtotalEl.textContent = formatKES(cartSubtotal());
-    if (totalEl) totalEl.textContent = formatKES(cartSubtotal() + shipping);
+    computeTotals();
 }
 
-// Delivery method
-deliveryOptions.forEach((option) => {
-    option.addEventListener("click", () => {
-        deliveryOptions.forEach((item) => item.classList.remove("selected"));
-        option.classList.add("selected");
-        const radio = option.querySelector("input");
-        if (radio) radio.checked = true;
-        updateTotal();
-    });
-});
+// Any page-local cart write (steppers, remove) plus writes from another tab
+// (storage event and the cart:updated broadcast from cart-store.js) all end
+// up here, so the summary can never drift out of sync with the cart.
+function recomputeCheckout() {
+    updateTotal();
+    if (typeof CartStore !== "undefined" && CartStore && typeof CartStore.syncBadges === "function") {
+        try { CartStore.syncBadges(); } catch (e) {}
+    }
+}
 
 if (typeof window !== "undefined" && window && typeof window.addEventListener === "function") {
-    window.addEventListener("storage", updateTotal);
+    window.addEventListener("cart:updated", recomputeCheckout);
+    window.addEventListener("storage", recomputeCheckout);
 }
+
+// Delivery method — cards are rendered from DELIVERY_OPTIONS so price,
+// estimate and the value submitted to the backend are the same data, and a
+// change here updates the summary instantly.
+function renderDeliveryOptions() {
+    if (!deliveryOptionsWrap) return;
+    deliveryOptionsWrap.innerHTML = DELIVERY_OPTIONS.map(function (option, index) {
+        return '<label class="delivery-option' + (index === 0 ? " selected" : "") + '">' +
+            '<input type="radio" name="delivery" data-name="' + option.name + '" data-cost="' + option.cost + '"' + (index === 0 ? " checked" : "") + '>' +
+            '<span class="do-text"><strong>' + option.name + '</strong><span class="do-window">' + option.window + '</span></span>' +
+            '<b>' + formatKES(option.cost) + '</b>' +
+            '</label>';
+    }).join("");
+}
+
+renderDeliveryOptions();
+deliveryOptionsWrap.addEventListener("click", function () {
+    const options = deliveryOptionsWrap.querySelectorAll(".delivery-option");
+    const chosen = deliveryOptionsWrap.querySelector("input[name='delivery']:checked");
+    options.forEach(function (item) {
+        item.classList.toggle("selected", item.querySelector("input[name='delivery']") === chosen);
+    });
+    if (typeof CartStore !== "undefined" && CartStore) {
+        try { CartStore.syncBadges(); } catch (e) {}
+    }
+    computeTotals();
+});
+deliveryOptionsWrap.addEventListener("change", function () {
+    const options = deliveryOptionsWrap.querySelectorAll(".delivery-option");
+    const chosen = deliveryOptionsWrap.querySelector("input[name='delivery']:checked");
+    options.forEach(function (item) {
+        item.classList.toggle("selected", item.querySelector("input[name='delivery']") === chosen);
+    });
+    computeTotals();
+});
 
 // Payment method
 // "paybill" = manual M-Pesa Paybill to the business number below.
@@ -258,22 +525,90 @@ function ensurePaybillNumber() {
     });
     return paybillOrderNumber;
 }
+// Generate at page load too: the reference is stable no matter when the
+// customer first sees the Paybill instructions.
+ensurePaybillNumber();
 const paybillFields = document.querySelector(".paybill-fields");
 function selectedPaymentMethod() {
     const active = document.querySelector(".payment-method.active");
     return (active && active.getAttribute("data-method")) || "card";
 }
+// Payment gate: only the selected method's inputs are enabled and visible.
+// Hidden fields are disabled too, so browser autofill and Tab can never
+// reach inputs that do not apply.
+function syncPaymentFields(selected) {
+    if (paymentFields) {
+        paymentFields.style.display = selected === "card" ? "block" : "none";
+        paymentFields.querySelectorAll("input").forEach(function (input) {
+            input.disabled = selected !== "card";
+        });
+    }
+    if (mobileMoneyFields) {
+        mobileMoneyFields.style.display = selected === "mobile" ? "block" : "none";
+        mobileMoneyFields.querySelectorAll("input").forEach(function (input) {
+            input.disabled = selected !== "mobile";
+        });
+    }
+    if (paybillFieldsEl) {
+        paybillFieldsEl.style.display = selected === "paybill" ? "block" : "none";
+        paybillFieldsEl.querySelectorAll("input").forEach(function (input) {
+            input.disabled = selected !== "paybill";
+        });
+    }
+    // Keep the honest, method-specific status line current.
+    const note = document.getElementById("paymentNote");
+    if (note) {
+        note.textContent = selected === "card"
+            ? "Card checkout is a demonstration — it processes no payment and sends no card details. To actually pay, use mobile money or M-Pesa Paybill."
+            : selected === "mobile"
+                ? "A real M-Pesa prompt will be sent to the number below. Your order only completes after Safaricom confirms the payment."
+                : "Pay to Business no. " + ELLE_PAYBILL + " with account " + paybillOrderNumber + " in your M-Pesa menu, then submit the transaction code. We confirm it before dispatch.";
+    }
+    if (selected === "paybill") ensurePaybillNumber();
+}
 paymentMethods.forEach((method) => {
     method.addEventListener("click", () => {
-        paymentMethods.forEach((item) => item.classList.remove("active"));
+        paymentMethods.forEach((item) => {
+            item.classList.remove("active");
+            item.setAttribute("aria-pressed", "false");
+        });
         method.classList.add("active");
-        const selected = selectedPaymentMethod();
-        if (paymentFields) paymentFields.style.display = selected === "card" ? "block" : "none";
-        if (mobileMoneyFields) mobileMoneyFields.style.display = selected === "mobile" ? "block" : "none";
-        if (paybillFields) paybillFields.style.display = selected === "paybill" ? "block" : "none";
-        if (selected === "paybill") ensurePaybillNumber();
+        method.setAttribute("aria-pressed", "true");
+        syncPaymentFields(selectedPaymentMethod());
     });
 });
+syncPaymentFields("card");
+
+// Turnstile widget: explicit rendering. The script loads with render=explicit
+// so it never auto-scans and never chokes on the placeholder or an empty
+// site key (demo mode). Only a real injected key gets a widget.
+function initTurnstileWidgets() {
+    const widgets = document.querySelectorAll(".cf-turnstile");
+    if (!widgets.length) return;
+    const tryRender = function (attempts) {
+        const api = (typeof window !== "undefined" && window.turnstile) || null;
+        if (!api || typeof api.render !== "function") {
+            if (attempts > 50) {
+                widgets.forEach(function (widget) { widget.style.display = "none"; });
+                return;
+            }
+            return setTimeout(function () { tryRender(attempts + 1); }, 150);
+        }
+        widgets.forEach(function (widget) {
+            const siteKey = widget.getAttribute("data-sitekey") || "";
+            if (!siteKey || siteKey.indexOf("__") === 0) {
+                widget.style.display = "none";
+                return;
+            }
+            if (widget.dataset.turnstileRendered === "1") return;
+            widget.dataset.turnstileRendered = "1";
+            widget.innerHTML = "";
+            api.render(widget, { sitekey: siteKey, callback: window.onTurnstileSuccess });
+        });
+    };
+    tryRender(0);
+}
+initTurnstileWidgets();
 
 // =========================
 // ORDER BUILDING
@@ -333,30 +668,36 @@ function readAccount() {
 }
 
 // The selected delivery option drives both the shipping cost and the window
-// shown on the confirmation page.
+// shown on the confirmation page. Values come from the same DELIVERY_OPTIONS
+// constants the summary uses — never from parsing rendered text.
 function selectedDelivery() {
-    let option = null;
-    try { option = document.querySelector(".delivery-option.selected"); } catch (e) { option = null; }
-    if (!option && typeof document.querySelectorAll === "function") {
-        try {
-            const options = document.querySelectorAll(".delivery-option");
-            if (options && options.length) option = options[0];
-        } catch (e) {}
-    }
-    if (!option) return { name: "Standard delivery", window: "3-7 business days", cost: 650 };
-    const nameEl = (option && typeof option.querySelector === "function") ? option.querySelector("strong") : null;
-    const windowEl = (option && typeof option.querySelector === "function") ? option.querySelector("span") : null;
-    const costEl = (option && typeof option.querySelector === "function") ? option.querySelector("b") : null;
-    let cost = costEl ? parsePrice(costEl.textContent) : 0;
-    if (!cost) {
-        const text = (option && option.textContent) ? option.textContent : "";
-        cost = parsePrice(text) || 650;
-    }
-    return {
-        name: (nameEl && nameEl.textContent) ? nameEl.textContent.trim() : "Standard delivery",
-        window: (windowEl && windowEl.textContent) ? windowEl.textContent.trim() : "3-7 business days",
-        cost: cost
-    };
+    const choice = document.querySelector("input[name='delivery']:checked");
+    const name = choice ? choice.getAttribute("data-name") : "";
+    const match = DELIVERY_OPTIONS.find(function (opt) { return opt.name === name; });
+    if (match) return { name: match.name, window: match.window, cost: match.cost };
+    return { name: DELIVERY_OPTIONS[0].name, window: DELIVERY_OPTIONS[0].window, cost: DELIVERY_OPTIONS[0].cost };
+}
+
+// One idempotency key per bag, not per click. Stored in sessionStorage and
+// regenerated only when the bag changes, so double clicks, retries and
+// refreshes all reuse the same key and the backend collapses them onto the
+// same pending order instead of creating duplicates.
+function checkoutIdempotencyKey(lines) {
+    const signature = lines.map(function (line) {
+        return (line && line.id ? line.id : "?") + ":" + (Number(line && line.quantity) || 0);
+    }).join("|");
+    let stored = null;
+    try { stored = JSON.parse(sessionStorage.getItem("xCheckoutIdem") || "null"); } catch (e) { stored = null; }
+    if (stored && stored.sig === signature && stored.key) return stored.key;
+    const key = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
+        ? crypto.randomUUID()
+        : ("idem_" + Date.now() + "_" + Math.floor(Math.random() * 100000));
+    try { sessionStorage.setItem("xCheckoutIdem", JSON.stringify({ sig: signature, key: key })); } catch (e) {}
+    return key;
+}
+
+function clearIdempotencyKey() {
+    try { sessionStorage.removeItem("xCheckoutIdem"); } catch (e) {}
 }
 
 function buildOrder(email, lines) {
@@ -502,8 +843,15 @@ function waitMs(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const poLabel = placeOrderButton ? placeOrderButton.querySelector(".po-label") : null;
+const poSpinner = placeOrderButton ? placeOrderButton.querySelector(".po-spinner") : null;
+const PO_DEFAULT_LABEL = "Place order";
 function setPlacing(placing) {
-    if (placeOrderButton) placeOrderButton.disabled = !!placing;
+    if (!placeOrderButton) return;
+    placeOrderButton.disabled = !!placing;
+    if (poSpinner) poSpinner.hidden = !placing;
+    if (poLabel) poLabel.textContent = placing ? "One moment…" : PO_DEFAULT_LABEL;
+    placeOrderButton.setAttribute("aria-busy", placing ? "true" : "false");
 }
 
 // The backend reports stock problems as HTTP 409 with a message like
@@ -593,6 +941,7 @@ async function placeStkOrder(email, lines, idempotencyKey) {
     }
 
     showStkStatus("Prompt sent to " + msisdn + ". Enter your M-Pesa PIN now — this page will confirm automatically.");
+    if (poLabel) poLabel.textContent = "Awaiting payment…";
 
     let paid = false;
     for (let attempt = 0; attempt < 40; attempt++) {
@@ -662,43 +1011,22 @@ function clearCheckoutError() {
     el.hidden = true;
 }
 
-// Place order: validate -> POST to API -> snapshot -> clear the bag -> Order Confirmation.
-// If API fails (offline/dev), complete locally so demo never breaks.
+// Place order: validate -> POST to API -> snapshot -> clear the bag -> Order
+// Confirmation. Only the M-Pesa (STK) flow can ever report "paid", because
+// that is the only flow with a server-side confirmation path. Card orders
+// stay pending: card checkout is a demonstration that processes no payment.
 if (placeOrderButton) {
     placeOrderButton.addEventListener("click", async () => {
+        // Re-entry guard: a second click while an order is in flight can
+        // never start a second submission.
+        if (placeOrderButton.disabled) return;
         clearCheckoutError();
-        const candidates = [
-            { id: "email", label: "Email" },
-            { id: "firstName", label: "First name" },
-            { id: "lastName", label: "Last name" },
-            { id: "address", label: "Address" },
-            { id: "city", label: "City" },
-            { id: "postal", label: "Postal / ZIP code" },
-            { id: "phone", label: "Phone" }
-        ];
-        const required = candidates.filter((field) => document.getElementById(field.id));
-        let firstInvalid = null;
-        required.forEach((field) => {
-            const input = document.getElementById(field.id);
-            if (!input) return;
-            const value = String(input.value || "").trim();
-            let valid = value.length > 0;
-            if (valid && field.id === "email") valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-            if (typeof input.classList !== "undefined") {
-                if (valid) input.classList.remove("input-error");
-                else input.classList.add("input-error");
-            }
-            if (!valid && !firstInvalid) firstInvalid = { input: input, label: field.label };
-        });
-        if (firstInvalid) {
-            showCheckoutError("Please complete the required checkout fields: " + firstInvalid.label + ".");
-            if (firstInvalid.input && typeof firstInvalid.input.focus === "function") firstInvalid.input.focus();
-            return;
-        }
+
+        if (!validateCheckoutForm()) return;
 
         const lines = cartLines();
         if (!lines.length) {
-            showCheckoutError("Your cart is empty. Add a product before placing an order.");
+            showCheckoutError("Your bag is empty. Add a product before placing an order.");
             return;
         }
 
@@ -708,31 +1036,54 @@ if (placeOrderButton) {
             const codeEl = document.getElementById("mpesaCode");
             payReference = codeEl ? String(codeEl.value || "").trim().toUpperCase() : "";
             if (payReference.length < 6) {
+                showFieldError(codeEl, "Enter the M-Pesa transaction code from your confirmation SMS.");
                 showCheckoutError("Enter the M-Pesa transaction code from your payment confirmation SMS.");
                 if (codeEl && typeof codeEl.focus === "function") codeEl.focus();
+                return;
+            }
+        }
+        if (payMethod === "mobile") {
+            const msisdnEl = document.getElementById("mobileMoneyNumber");
+            const digits = String((msisdnEl && msisdnEl.value) || fieldValue("phone")).replace(/\D/g, "");
+            if (digits.length < 9) {
+                if (msisdnEl) {
+                    showFieldError(msisdnEl, "Enter your M-Pesa number so we can send the payment prompt.");
+                    msisdnEl.focus();
+                }
+                showCheckoutError("Enter your M-Pesa phone number so we can send the payment prompt.");
                 return;
             }
         }
 
         const email = fieldValue("email");
 
-        // Idempotency: one key per checkout attempt so double-clicks /
-        // retries / refreshes cannot create duplicate orders or payments.
-        const idempotencyKey = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
-            ? crypto.randomUUID()
-            : ("idem_" + Date.now());
+        // Idempotency: one key per bag (sessionStorage), reused across
+        // double-clicks, retries and refreshes so duplicate orders cannot be
+        // created. Only a bag change mints a new key.
+        const idempotencyKey = checkoutIdempotencyKey(lines);
 
         // M-Pesa prompt goes through the STK flow (server-created order +
         // PIN prompt + polling). Card and Paybill use the classic flow below.
-        if (selectedPaymentMethod() === "mobile") {
+        if (payMethod === "mobile") {
             await placeStkOrder(email, lines, idempotencyKey);
             return;
         }
 
+        // No payment processor for cards: honest snapshot + payload.
+        // "pending" means exactly that — payment has NOT been processed.
         const order = buildOrder(email, lines);
-        order.payment = { method: payMethod, reference: payReference, status: payMethod === "card" ? "paid" : "pending" };
-        
-        // Prepare API payload
+        order.payment = {
+            method: payMethod,
+            reference: payReference,
+            status: "pending",
+            simulated: payMethod === "card",
+            note: payMethod === "card"
+                ? "Card checkout is a demonstration. No payment was processed."
+                : "Waiting for M-Pesa payment confirmation."
+        };
+
+        // Prepare API payload (server re-prices items from its own database;
+        // client totals are informational only)
         const delivery = selectedDelivery();
         const payload = {
             email: order.email,
@@ -752,7 +1103,7 @@ if (placeOrderButton) {
             idempotencyKey: idempotencyKey
         };
 
-        // Try API first
+        // Try API first — server order data (number, D1-priced totals) wins.
         let apiSuccess = false;
         setPlacing(true);
         try {
@@ -798,15 +1149,23 @@ if (placeOrderButton) {
         }
         setPlacing(false);
 
-        // Always save to localStorage for confirmation page (works offline)
+        // Always save to localStorage for confirmation page (works offline).
+        // The snapshot always says "pending" — the confirmation page words
+        // the outcome honestly (received / awaiting payment / demo card).
         saveOrder(order);
         saveAccountPreferences();
 
-        try { localStorage.removeItem("xCart"); } catch (e) {}
+        // Clear the bag through the store so badges + other tabs resync.
+        if (typeof CartStore !== "undefined" && CartStore && typeof CartStore.clear === "function") {
+            try { CartStore.clear(); } catch (e) {}
+        } else {
+            try { localStorage.removeItem("xCart"); } catch (e) {}
+        }
         if (typeof CartStore !== "undefined" && CartStore) {
             try { if (typeof CartStore.syncBadges === "function") CartStore.syncBadges(); } catch (e) {}
         }
         try { localStorage.removeItem("xCheckoutRedirect"); } catch (e) {}
+        clearIdempotencyKey();
 
         window.location.href = "order-confirmation.html";
     });
